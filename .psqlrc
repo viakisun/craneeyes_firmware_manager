@@ -1,0 +1,23 @@
+-- psql 설정 파일 (.psqlrc)
+-- 홈 디렉토리에 저장하면 psql 시작 시 자동으로 로드됩니다
+
+-- 기본 설정
+\set PROMPT1 '%[%033[1;33m%]%n@%M:%>%[%033[0m%] %# '
+\set PROMPT2 '%[%033[1;33m%]%n@%M:%>%[%033[0m%] %R%# '
+
+-- 타임아웃 설정
+\set statement_timeout 30000
+\set idle_in_transaction_session_timeout 30000
+
+-- 출력 설정
+\x auto
+\timing on
+
+-- 유용한 별칭들
+\set firmwares 'SELECT id, model_id, version, s3_key FROM firmwares ORDER BY id DESC LIMIT 10;'
+\set models 'SELECT id, name, category, firmware_count FROM models ORDER BY name;'
+\set logs 'SELECT id, type, user_email, model_name, version, timestamp FROM logs ORDER BY id DESC LIMIT 10;'
+
+-- 연결 정보 표시
+\echo 'Connected to CraneEyes Firmware Database'
+\echo 'Use \\firmwares, \\models, \\logs for quick queries'
