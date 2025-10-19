@@ -1,0 +1,122 @@
+[
+  {
+    "model": "SS1416",
+    "version": "1.0.0",
+    "s3Key": "firmwares/SS1416/1.0.0/SS1416-firmware-v1.0.0.txt",
+    "size": "2.97 KB"
+  },
+  {
+    "model": "SS1406",
+    "version": "1.0.0",
+    "s3Key": "firmwares/SS1406/1.0.0/SS1406-firmware-v1.0.0.txt",
+    "size": "2.97 KB"
+  },
+  {
+    "model": "SS1926",
+    "version": "1.0.0",
+    "s3Key": "firmwares/SS1926/1.0.0/SS1926-firmware-v1.0.0.txt",
+    "size": "2.97 KB"
+  },
+  {
+    "model": "SS2036Ace",
+    "version": "1.0.0",
+    "s3Key": "firmwares/SS2036Ace/1.0.0/SS2036Ace-firmware-v1.0.0.txt",
+    "size": "2.98 KB"
+  },
+  {
+    "model": "SS2037Ace",
+    "version": "1.0.0",
+    "s3Key": "firmwares/SS2037Ace/1.0.0/SS2037Ace-firmware-v1.0.0.txt",
+    "size": "2.98 KB"
+  },
+  {
+    "model": "ST2216",
+    "version": "1.0.0",
+    "s3Key": "firmwares/ST2216/1.0.0/ST2216-firmware-v1.0.0.txt",
+    "size": "2.97 KB"
+  },
+  {
+    "model": "ST2217",
+    "version": "1.0.0",
+    "s3Key": "firmwares/ST2217/1.0.0/ST2217-firmware-v1.0.0.txt",
+    "size": "2.97 KB"
+  },
+  {
+    "model": "SS2037D",
+    "version": "1.0.0",
+    "s3Key": "firmwares/SS2037D/1.0.0/SS2037D-firmware-v1.0.0.txt",
+    "size": "2.97 KB"
+  },
+  {
+    "model": "ST2217D",
+    "version": "1.0.0",
+    "s3Key": "firmwares/ST2217D/1.0.0/ST2217D-firmware-v1.0.0.txt",
+    "size": "2.97 KB"
+  },
+  {
+    "model": "ST2507",
+    "version": "1.0.0",
+    "s3Key": "firmwares/ST2507/1.0.0/ST2507-firmware-v1.0.0.txt",
+    "size": "2.97 KB"
+  },
+  {
+    "model": "SS2725LB",
+    "version": "1.0.0",
+    "s3Key": "firmwares/SS2725LB/1.0.0/SS2725LB-firmware-v1.0.0.txt",
+    "size": "2.98 KB"
+  },
+  {
+    "model": "SS3506",
+    "version": "1.0.0",
+    "s3Key": "firmwares/SS3506/1.0.0/SS3506-firmware-v1.0.0.txt",
+    "size": "2.97 KB"
+  },
+  {
+    "model": "SS3506M",
+    "version": "1.0.0",
+    "s3Key": "firmwares/SS3506M/1.0.0/SS3506M-firmware-v1.0.0.txt",
+    "size": "2.98 KB"
+  },
+  {
+    "model": "SM7016",
+    "version": "1.0.0",
+    "s3Key": "firmwares/SM7016/1.0.0/SM7016-firmware-v1.0.0.txt",
+    "size": "2.97 KB"
+  },
+  {
+    "model": "SS75065",
+    "version": "1.0.0",
+    "s3Key": "firmwares/SS75065/1.0.0/SS75065-firmware-v1.0.0.txt",
+    "size": "2.98 KB"
+  },
+  {
+    "model": "ST7516",
+    "version": "1.0.0",
+    "s3Key": "firmwares/ST7516/1.0.0/ST7516-firmware-v1.0.0.txt",
+    "size": "2.97 KB"
+  },
+  {
+    "model": "SSN2200A-PRO",
+    "version": "1.0.0",
+    "s3Key": "firmwares/SSN2200A-PRO/1.0.0/SSN2200A-PRO-firmware-v1.0.0.txt",
+    "size": "2.98 KB"
+  },
+  {
+    "model": "SSN2200III",
+    "version": "1.0.0",
+    "s3Key": "firmwares/SSN2200III/1.0.0/SSN2200III-firmware-v1.0.0.txt",
+    "size": "2.97 KB"
+  },
+  {
+    "model": "SSN2800III",
+    "version": "1.0.0",
+    "s3Key": "firmwares/SSN2800III/1.0.0/SSN2800III-firmware-v1.0.0.txt",
+    "size": "2.97 KB"
+  },
+  {
+    "model": "SSN3000",
+    "version": "1.0.0",
+    "s3Key": "firmwares/SSN3000/1.0.0/SSN3000-firmware-v1.0.0.txt",
+    "size": "2.96 KB"
+  }
+]

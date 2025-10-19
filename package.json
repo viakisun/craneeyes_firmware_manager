@@ -1,0 +1,48 @@
+{
+  "name": "craneeyes-firmware-manager",
+  "version": "0.1.0",
+  "description": "CraneEyes Firmware Management System - Web-based firmware distribution platform",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "server": "node server.js",
+    "dev:full": "concurrently \"npm run server\" \"npm run dev\"",
+    "generate-dummies": "tsx scripts/generate-dummy-firmwares.ts",
+    "complete-reset": "tsx scripts/complete-reset-rebuild.ts",
+    "verify-system": "tsx scripts/verify-system.ts"
+  },
+  "keywords": [
+    "firmware",
+    "management",
+    "craneeyes",
+    "aws-s3"
+  ],
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.913.0",
+    "@aws-sdk/fetch-http-handler": "^3.370.0",
+    "@aws-sdk/s3-request-presigner": "^3.913.0",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
+    "express": "^5.1.0",
+    "lucide-react": "^0.546.0",
+    "pg": "^8.16.3",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-router-dom": "^6.16.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.8.0",
+    "@types/react": "^18.2.25",
+    "@types/react-dom": "^18.2.11",
+    "@vitejs/plugin-react": "^4.1.0",
+    "autoprefixer": "^10.4.16",
+    "concurrently": "^9.2.1",
+    "postcss": "^8.4.31",
+    "tailwindcss": "^3.3.3",
+    "tsx": "^4.7.0",
+    "typescript": "^5.2.2",
+    "vite": "^4.5.0"
+  }
+}
