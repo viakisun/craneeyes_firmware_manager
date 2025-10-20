@@ -35,9 +35,9 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
             const firmwaresData = await databaseService.getFirmwares();
             console.log('✅ DataProvider: Firmwares loaded from DB:', firmwaresData.length);
         
-        // Load logs from database initial data
-        const logsData = INITIAL_LOGS;
-        console.log('✅ DataProvider: Logs loaded:', logsData.length);
+        // Load logs from database service
+        const logsData = await databaseService.getLogs();
+        console.log('✅ DataProvider: Logs loaded from DB:', logsData.length);
         
         // Update models with firmware counts
         const modelsWithCounts = modelsData.map(model => ({
