@@ -58,12 +58,30 @@ echo "Step 5: Restarting backend server with PM2..."
 pm2 restart ecosystem.config.cjs --update-env || pm2 start ecosystem.config.cjs
 
 echo ""
-echo "Step 6: Reloading Nginx configuration..."
+echo "Step 6: Configuring Nginx..."
 if systemctl is-active --quiet nginx 2>/dev/null; then
-    sudo systemctl reload nginx
-    echo "Nginx reloaded successfully"
+    # Disable default Nginx configuration to avoid conflicts
+    if [ -f /etc/nginx/conf.d/default.conf ]; then
+        echo "Disabling default Nginx configuration..."
+        sudo mv /etc/nginx/conf.d/default.conf /etc/nginx/conf.d/default.conf.disabled 2>/dev/null || true
+    fi
+    
+    # Copy craneeyes configuration if it doesn't exist
+    if [ ! -f /etc/nginx/conf.d/craneeyes.conf ]; then
+        echo "Copying Nginx configuration..."
+        sudo cp nginx.conf /etc/nginx/conf.d/craneeyes.conf
+    fi
+    
+    # Test and reload Nginx
+    if sudo nginx -t 2>/dev/null; then
+        sudo systemctl reload nginx
+        echo "Nginx reloaded successfully"
+    else
+        echo -e "${YELLOW}Nginx configuration test failed. Please check manually.${NC}"
+        sudo nginx -t
+    fi
 else
-    echo -e "${YELLOW}Nginx is not installed or not running. Skipping Nginx reload.${NC}"
+    echo -e "${YELLOW}Nginx is not installed or not running. Skipping Nginx configuration.${NC}"
     echo "Please install and configure Nginx using the DEPLOY.md guide."
 fi
 
