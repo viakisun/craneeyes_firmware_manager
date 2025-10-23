@@ -40,25 +40,36 @@ echo "Step 1: Pulling latest code from repository..."
 git pull origin main
 
 echo ""
-echo "Step 2: Installing dependencies..."
+echo "Step 2: Checking environment configuration..."
+if [ ! -f .env ]; then
+    echo -e "${YELLOW}Warning: .env file not found.${NC}"
+    echo "Copying env.production.example to .env..."
+    cp env.production.example .env
+    echo -e "${YELLOW}Please edit .env file with your actual credentials before building.${NC}"
+    echo "Press Ctrl+C to cancel and edit .env, or wait 5 seconds to continue..."
+    sleep 5
+fi
+
+echo ""
+echo "Step 3: Installing dependencies..."
 npm install
 
 echo ""
-echo "Step 3: Building frontend..."
+echo "Step 4: Building frontend..."
 npm run build
 
 echo ""
-echo "Step 4: Copying built files to web directory..."
+echo "Step 5: Copying built files to web directory..."
 sudo mkdir -p /var/www/html/craneeyes
 sudo rm -rf /var/www/html/craneeyes/*
 sudo cp -r dist/* /var/www/html/craneeyes/
 
 echo ""
-echo "Step 5: Restarting backend server with PM2..."
+echo "Step 6: Restarting backend server with PM2..."
 pm2 restart ecosystem.config.cjs --update-env || pm2 start ecosystem.config.cjs
 
 echo ""
-echo "Step 6: Configuring Nginx..."
+echo "Step 7: Configuring Nginx..."
 if systemctl is-active --quiet nginx 2>/dev/null; then
     # Disable default Nginx configuration to avoid conflicts
     if [ -f /etc/nginx/conf.d/default.conf ]; then
