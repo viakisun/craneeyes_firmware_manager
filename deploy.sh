@@ -75,6 +75,10 @@ echo ""
 echo "PM2 Status:"
 pm2 list
 echo ""
-echo "Application is now live at: https://firmware.yourdomain.com"
+echo "Backend API is now running at: http://localhost:3001"
+echo "Frontend files are available at: /var/www/html/craneeyes"
+echo ""
+echo "Note: Configure Nginx to serve the application with your domain name."
+echo "If SSL is needed, run: sudo certbot --nginx -d firmware.yourdomain.com"
 echo ""
 
