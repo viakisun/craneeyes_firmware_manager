@@ -145,9 +145,8 @@ sudo nano /etc/nginx/conf.d/craneeyes.conf
 
 Copy the contents from `nginx.conf` in the project root.
 
-Important modifications needed:
-- Replace `firmware.yourdomain.com` with your actual domain name
-- Configure SSL certificate paths after obtaining SSL certificate
+The configuration uses `server_name _;` which accepts any domain name or IP address.
+This allows the application to work with EC2 public IP, hostname, or custom domain.
 
 ### 3.2 Test Nginx Configuration
 
@@ -172,7 +171,7 @@ sudo yum install -y certbot python3-certbot-nginx
 ### 4.2 Obtain SSL Certificate
 
 ```bash
-sudo certbot --nginx -d firmware.yourdomain.com
+sudo certbot --nginx -d yourdomain.com
 ```
 
 Follow the prompts to complete the SSL certificate installation.
