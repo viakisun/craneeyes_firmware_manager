@@ -6,7 +6,7 @@ export default defineConfig({
   plugins: [react()],
   server: {
     port: 5173,
-    open: true
+    open: false
   },
   // AWS SDK 브라우저 호환성을 위한 설정
   define: {
