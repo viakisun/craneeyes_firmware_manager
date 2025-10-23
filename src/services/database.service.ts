@@ -5,8 +5,10 @@ class DatabaseService {
 
   constructor() {
     // 실제 백엔드 API 엔드포인트
-    this.apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api';
+    const envUrl = import.meta.env.VITE_API_BASE_URL;
+    this.apiBaseUrl = envUrl && envUrl.trim() !== '' ? envUrl : 'http://localhost:3001/api';
     console.log('🔧 DatabaseService: Initialized (using API endpoints)');
+    console.log('🔧 DatabaseService: Env VITE_API_BASE_URL:', envUrl);
     console.log('🔧 DatabaseService: API Base URL:', this.apiBaseUrl);
   }
 

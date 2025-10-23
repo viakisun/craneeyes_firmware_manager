@@ -9,11 +9,6 @@ interface DataProviderProps {
   children: ReactNode;
 }
 
-    // Initial data - loaded from database service
-const INITIAL_LOGS: Log[] = [
-  { id: 1, type: 'system', user: 'System', model: 'System', version: '1.0.0', ip: 'System', timestamp: '2025-01-15 00:00:00' },
-];
-
 export const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
   const [models, setModels] = useState<Model[]>([]);
   const [firmwares, setFirmwares] = useState<Firmware[]>([]);
