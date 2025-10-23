@@ -5,6 +5,11 @@
 
 set -e  # Exit on error
 
+# Function to check if a command exists
+command_exists() {
+    command -v "$1" >/dev/null 2>&1
+}
+
 echo "======================================"
 echo "CraneEyes Firmware Manager Deployment"
 echo "======================================"
@@ -54,7 +59,13 @@ pm2 restart ecosystem.config.cjs --update-env || pm2 start ecosystem.config.cjs
 
 echo ""
 echo "Step 6: Reloading Nginx configuration..."
-sudo systemctl reload nginx
+if systemctl is-active --quiet nginx 2>/dev/null; then
+    sudo systemctl reload nginx
+    echo "Nginx reloaded successfully"
+else
+    echo -e "${YELLOW}Nginx is not installed or not running. Skipping Nginx reload.${NC}"
+    echo "Please install and configure Nginx using the DEPLOY.md guide."
+fi
 
 echo ""
 echo -e "${GREEN}======================================"
