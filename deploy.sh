@@ -50,7 +50,7 @@ sudo cp -r dist/* /var/www/html/craneeyes/
 
 echo ""
 echo "Step 5: Restarting backend server with PM2..."
-pm2 restart ecosystem.config.js --update-env || pm2 start ecosystem.config.js
+pm2 restart ecosystem.config.cjs --update-env || pm2 start ecosystem.config.cjs
 
 echo ""
 echo "Step 6: Reloading Nginx configuration..."

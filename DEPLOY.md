@@ -196,7 +196,7 @@ mkdir -p logs
 ### 5.2 Start Backend Server with PM2
 
 ```bash
-pm2 start ecosystem.config.js
+pm2 start ecosystem.config.cjs
 ```
 
 ### 5.3 Save PM2 Configuration
