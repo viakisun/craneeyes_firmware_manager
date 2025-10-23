@@ -24,6 +24,12 @@ fi
 PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$PROJECT_DIR"
 
+# Check if PM2 is installed
+if ! command -v pm2 &> /dev/null; then
+    echo -e "${YELLOW}PM2 is not installed. Installing PM2...${NC}"
+    sudo npm install -g pm2
+fi
+
 echo ""
 echo "Step 1: Pulling latest code from repository..."
 git pull origin main
