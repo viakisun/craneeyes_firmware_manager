@@ -39,7 +39,8 @@ npm run build
 echo ""
 echo "Step 4: Copying built files to web directory..."
 sudo mkdir -p /var/www/html/craneeyes
-sudo cp -r dist/* /var/www/html/craneeyes/dist/
+sudo rm -rf /var/www/html/craneeyes/*
+sudo cp -r dist/* /var/www/html/craneeyes/
 
 echo ""
 echo "Step 5: Restarting backend server with PM2..."

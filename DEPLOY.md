@@ -131,7 +131,7 @@ npm run build
 
 ```bash
 sudo mkdir -p /var/www/html/craneeyes
-sudo cp -r dist/* /var/www/html/craneeyes/dist/
+sudo cp -r dist/* /var/www/html/craneeyes/
 sudo chown -R nginx:nginx /var/www/html/craneeyes
 ```
 
