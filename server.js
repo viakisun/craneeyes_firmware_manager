@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import { Pool } from 'pg';
 import dotenv from 'dotenv';
+import bcrypt from 'bcrypt';
 
 dotenv.config();
 
@@ -237,6 +238,157 @@ app.post('/api/logs', async (req, res) => {
   } catch (error) {
     console.error('Error adding log:', error);
     res.status(500).json({ error: 'Failed to add log' });
+  }
+});
+
+// SFTP Users endpoints
+app.get('/api/sftp-users', async (req, res) => {
+  try {
+    const query = `
+      SELECT id, username, role, enabled, created_at as "createdAt", updated_at as "updatedAt"
+      FROM sftp_users 
+      ORDER BY created_at DESC
+    `;
+    const result = await pool.query(query);
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Error fetching SFTP users:', error);
+    res.status(500).json({ error: 'Failed to fetch SFTP users' });
+  }
+});
+
+app.post('/api/sftp-users', async (req, res) => {
+  try {
+    const { username, password, role } = req.body;
+    
+    // Validate input
+    if (!username || !password || !role) {
+      return res.status(400).json({ error: 'Username, password, and role are required' });
+    }
+    
+    if (role !== 'admin' && role !== 'downloader') {
+      return res.status(400).json({ error: 'Role must be either "admin" or "downloader"' });
+    }
+    
+    // Hash password
+    const hashedPassword = await bcrypt.hash(password, 10);
+    
+    const query = `
+      INSERT INTO sftp_users (username, password, role, enabled)
+      VALUES ($1, $2, $3, true)
+      RETURNING id, username, role, enabled, created_at as "createdAt", updated_at as "updatedAt"
+    `;
+    const result = await pool.query(query, [username, hashedPassword, role]);
+    
+    console.log(`✅ Created SFTP user: ${username} (${role})`);
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error('Error creating SFTP user:', error);
+    if (error.code === '23505') { // Unique violation
+      res.status(409).json({ error: 'Username already exists' });
+    } else {
+      res.status(500).json({ error: 'Failed to create SFTP user' });
+    }
+  }
+});
+
+app.put('/api/sftp-users/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { password, role } = req.body;
+    
+    const updates = [];
+    const values = [];
+    let paramIndex = 1;
+    
+    if (password) {
+      const hashedPassword = await bcrypt.hash(password, 10);
+      updates.push(`password = $${paramIndex++}`);
+      values.push(hashedPassword);
+    }
+    
+    if (role) {
+      if (role !== 'admin' && role !== 'downloader') {
+        return res.status(400).json({ error: 'Role must be either "admin" or "downloader"' });
+      }
+      updates.push(`role = $${paramIndex++}`);
+      values.push(role);
+    }
+    
+    if (updates.length === 0) {
+      return res.status(400).json({ error: 'No updates provided' });
+    }
+    
+    values.push(id);
+    const query = `
+      UPDATE sftp_users 
+      SET ${updates.join(', ')}
+      WHERE id = $${paramIndex}
+      RETURNING id, username, role, enabled, created_at as "createdAt", updated_at as "updatedAt"
+    `;
+    
+    const result = await pool.query(query, values);
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'SFTP user not found' });
+    }
+    
+    console.log(`✅ Updated SFTP user: ${result.rows[0].username}`);
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error('Error updating SFTP user:', error);
+    res.status(500).json({ error: 'Failed to update SFTP user' });
+  }
+});
+
+app.post('/api/sftp-users/:id/toggle', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const query = `
+      UPDATE sftp_users 
+      SET enabled = NOT enabled
+      WHERE id = $1
+      RETURNING id, username, role, enabled, created_at as "createdAt", updated_at as "updatedAt"
+    `;
+    
+    const result = await pool.query(query, [id]);
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'SFTP user not found' });
+    }
+    
+    const user = result.rows[0];
+    console.log(`✅ Toggled SFTP user: ${user.username} (enabled: ${user.enabled})`);
+    res.json(user);
+  } catch (error) {
+    console.error('Error toggling SFTP user:', error);
+    res.status(500).json({ error: 'Failed to toggle SFTP user' });
+  }
+});
+
+app.delete('/api/sftp-users/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // Get username before deletion for logging
+    const selectQuery = 'SELECT username FROM sftp_users WHERE id = $1';
+    const selectResult = await pool.query(selectQuery, [id]);
+    
+    if (selectResult.rows.length === 0) {
+      return res.status(404).json({ error: 'SFTP user not found' });
+    }
+    
+    const username = selectResult.rows[0].username;
+    
+    // Delete user
+    await pool.query('DELETE FROM sftp_users WHERE id = $1', [id]);
+    
+    console.log(`✅ Deleted SFTP user: ${username}`);
+    res.json({ message: 'SFTP user deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting SFTP user:', error);
+    res.status(500).json({ error: 'Failed to delete SFTP user' });
   }
 });
 

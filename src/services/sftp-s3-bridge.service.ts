@@ -1,0 +1,333 @@
+import { S3Client, GetObjectCommand, PutObjectCommand, DeleteObjectCommand, ListObjectsV2Command, HeadObjectCommand } from '@aws-sdk/client-s3';
+import { Readable } from 'stream';
+
+export type UserRole = 'admin' | 'downloader';
+
+export interface SftpUser {
+  username: string;
+  role: UserRole;
+}
+
+export interface FileAttributes {
+  size: number;
+  mode: number;
+  mtime: number;
+  atime: number;
+  uid: number;
+  gid: number;
+  isDirectory: boolean;
+}
+
+export interface DirectoryEntry {
+  filename: string;
+  longname: string;
+  attrs: FileAttributes;
+}
+
+/**
+ * SFTP-S3 Bridge Service
+ * Translates SFTP operations to S3 operations
+ * Enforces role-based access control
+ */
+export class SftpS3BridgeService {
+  private client: S3Client;
+  private bucketName: string;
+
+  constructor(region: string, accessKeyId: string, secretAccessKey: string, bucketName: string) {
+    this.client = new S3Client({
+      region,
+      credentials: {
+        accessKeyId,
+        secretAccessKey,
+      },
+    });
+    this.bucketName = bucketName;
+    console.log('🔧 SFTP-S3 Bridge: Initialized');
+  }
+
+  /**
+   * Check if user has permission for the operation
+   */
+  private checkPermission(user: SftpUser, operation: 'read' | 'write' | 'delete'): boolean {
+    if (user.role === 'admin') {
+      return true; // Admin can do everything
+    }
+    if (user.role === 'downloader' && operation === 'read') {
+      return true; // Downloader can only read
+    }
+    return false;
+  }
+
+  /**
+   * Normalize S3 path (remove leading slash, ensure it's within firmwares/)
+   */
+  private normalizeS3Path(path: string): string {
+    // Remove leading slash
+    let normalized = path.startsWith('/') ? path.slice(1) : path;
+    
+    // If path is empty or root, default to firmwares/
+    if (!normalized || normalized === '/') {
+      normalized = 'firmwares/';
+    }
+    
+    // Ensure path is within firmwares/ directory
+    if (!normalized.startsWith('firmwares/')) {
+      normalized = 'firmwares/' + normalized;
+    }
+    
+    return normalized;
+  }
+
+  /**
+   * Read file from S3
+   */
+  async readFile(user: SftpUser, path: string): Promise<Buffer> {
+    console.log(`📖 SFTP-S3 Bridge: Read file requested by ${user.username} (${user.role}): ${path}`);
+    
+    if (!this.checkPermission(user, 'read')) {
+      console.error(`❌ SFTP-S3 Bridge: Permission denied for ${user.username}`);
+      throw new Error('Permission denied');
+    }
+
+    try {
+      const s3Key = this.normalizeS3Path(path);
+      console.log(`🔑 SFTP-S3 Bridge: S3 key: ${s3Key}`);
+      
+      const command = new GetObjectCommand({
+        Bucket: this.bucketName,
+        Key: s3Key,
+      });
+
+      const response = await this.client.send(command);
+      
+      if (!response.Body) {
+        throw new Error('Empty response from S3');
+      }
+
+      // Convert stream to buffer
+      const chunks: Uint8Array[] = [];
+      const stream = response.Body as Readable;
+      
+      for await (const chunk of stream) {
+        chunks.push(chunk);
+      }
+      
+      const buffer = Buffer.concat(chunks);
+      console.log(`✅ SFTP-S3 Bridge: File read successfully (${buffer.length} bytes)`);
+      return buffer;
+    } catch (error) {
+      console.error(`❌ SFTP-S3 Bridge: Failed to read file:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Write file to S3
+   */
+  async writeFile(user: SftpUser, path: string, data: Buffer): Promise<void> {
+    console.log(`📝 SFTP-S3 Bridge: Write file requested by ${user.username} (${user.role}): ${path}`);
+    
+    if (!this.checkPermission(user, 'write')) {
+      console.error(`❌ SFTP-S3 Bridge: Permission denied for ${user.username}`);
+      throw new Error('Permission denied');
+    }
+
+    try {
+      const s3Key = this.normalizeS3Path(path);
+      console.log(`🔑 SFTP-S3 Bridge: S3 key: ${s3Key}, size: ${data.length} bytes`);
+      
+      const command = new PutObjectCommand({
+        Bucket: this.bucketName,
+        Key: s3Key,
+        Body: data,
+        ContentType: this.getContentType(path),
+      });
+
+      await this.client.send(command);
+      console.log(`✅ SFTP-S3 Bridge: File written successfully`);
+    } catch (error) {
+      console.error(`❌ SFTP-S3 Bridge: Failed to write file:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Delete file from S3
+   */
+  async deleteFile(user: SftpUser, path: string): Promise<void> {
+    console.log(`🗑️ SFTP-S3 Bridge: Delete file requested by ${user.username} (${user.role}): ${path}`);
+    
+    if (!this.checkPermission(user, 'delete')) {
+      console.error(`❌ SFTP-S3 Bridge: Permission denied for ${user.username}`);
+      throw new Error('Permission denied');
+    }
+
+    try {
+      const s3Key = this.normalizeS3Path(path);
+      console.log(`🔑 SFTP-S3 Bridge: S3 key: ${s3Key}`);
+      
+      const command = new DeleteObjectCommand({
+        Bucket: this.bucketName,
+        Key: s3Key,
+      });
+
+      await this.client.send(command);
+      console.log(`✅ SFTP-S3 Bridge: File deleted successfully`);
+    } catch (error) {
+      console.error(`❌ SFTP-S3 Bridge: Failed to delete file:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get file/directory attributes
+   */
+  async getAttributes(user: SftpUser, path: string): Promise<FileAttributes> {
+    console.log(`📊 SFTP-S3 Bridge: Get attributes requested by ${user.username}: ${path}`);
+    
+    if (!this.checkPermission(user, 'read')) {
+      throw new Error('Permission denied');
+    }
+
+    try {
+      const s3Key = this.normalizeS3Path(path);
+      
+      // Check if it's a directory (ends with /)
+      if (s3Key.endsWith('/')) {
+        return this.createDirectoryAttributes();
+      }
+
+      // Try to get file metadata
+      try {
+        const command = new HeadObjectCommand({
+          Bucket: this.bucketName,
+          Key: s3Key,
+        });
+        
+        const response = await this.client.send(command);
+        
+        return {
+          size: response.ContentLength || 0,
+          mode: 0o100644, // Regular file
+          mtime: response.LastModified ? Math.floor(response.LastModified.getTime() / 1000) : Date.now() / 1000,
+          atime: Date.now() / 1000,
+          uid: 1000,
+          gid: 1000,
+          isDirectory: false,
+        };
+      } catch {
+        // If file doesn't exist, check if it's a directory prefix
+        return this.createDirectoryAttributes();
+      }
+    } catch (error) {
+      console.error(`❌ SFTP-S3 Bridge: Failed to get attributes:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * List directory contents
+   */
+  async readdir(user: SftpUser, path: string): Promise<DirectoryEntry[]> {
+    console.log(`📁 SFTP-S3 Bridge: List directory requested by ${user.username}: ${path}`);
+    
+    if (!this.checkPermission(user, 'read')) {
+      throw new Error('Permission denied');
+    }
+
+    try {
+      const s3Prefix = this.normalizeS3Path(path);
+      const prefix = s3Prefix.endsWith('/') ? s3Prefix : s3Prefix + '/';
+      
+      console.log(`🔑 SFTP-S3 Bridge: S3 prefix: ${prefix}`);
+      
+      const command = new ListObjectsV2Command({
+        Bucket: this.bucketName,
+        Prefix: prefix,
+        Delimiter: '/',
+      });
+
+      const response = await this.client.send(command);
+      const entries: DirectoryEntry[] = [];
+
+      // Add subdirectories (CommonPrefixes)
+      if (response.CommonPrefixes) {
+        for (const commonPrefix of response.CommonPrefixes) {
+          if (commonPrefix.Prefix) {
+            const dirName = commonPrefix.Prefix.slice(prefix.length).replace('/', '');
+            if (dirName) {
+              entries.push({
+                filename: dirName,
+                longname: `drwxr-xr-x 1 user group 0 ${new Date().toISOString().split('T')[0]} ${dirName}`,
+                attrs: this.createDirectoryAttributes(),
+              });
+            }
+          }
+        }
+      }
+
+      // Add files (Contents)
+      if (response.Contents) {
+        for (const object of response.Contents) {
+          if (object.Key && object.Key !== prefix) {
+            const fileName = object.Key.slice(prefix.length);
+            if (fileName && !fileName.includes('/')) {
+              const mtime = object.LastModified ? Math.floor(object.LastModified.getTime() / 1000) : Date.now() / 1000;
+              const size = object.Size || 0;
+              
+              entries.push({
+                filename: fileName,
+                longname: `-rw-r--r-- 1 user group ${size} ${new Date(mtime * 1000).toISOString().split('T')[0]} ${fileName}`,
+                attrs: {
+                  size,
+                  mode: 0o100644,
+                  mtime,
+                  atime: Date.now() / 1000,
+                  uid: 1000,
+                  gid: 1000,
+                  isDirectory: false,
+                },
+              });
+            }
+          }
+        }
+      }
+
+      console.log(`✅ SFTP-S3 Bridge: Listed ${entries.length} entries`);
+      return entries;
+    } catch (error) {
+      console.error(`❌ SFTP-S3 Bridge: Failed to list directory:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Create directory attributes
+   */
+  private createDirectoryAttributes(): FileAttributes {
+    return {
+      size: 0,
+      mode: 0o040755, // Directory
+      mtime: Date.now() / 1000,
+      atime: Date.now() / 1000,
+      uid: 1000,
+      gid: 1000,
+      isDirectory: true,
+    };
+  }
+
+  /**
+   * Determine content type from file extension
+   */
+  private getContentType(path: string): string {
+    const ext = path.split('.').pop()?.toLowerCase();
+    const contentTypes: Record<string, string> = {
+      'bin': 'application/octet-stream',
+      'pdf': 'application/pdf',
+      'zip': 'application/zip',
+      'txt': 'text/plain',
+    };
+    return contentTypes[ext || ''] || 'application/octet-stream';
+  }
+}
+

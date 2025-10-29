@@ -20,9 +20,12 @@ A comprehensive web-based firmware management system for CraneEyes crane models.
 - **Activity Logs**: Track all system activities and downloads
 - **Dashboard**: Overview of system statistics and recent activity
 - **Complete Reset**: Bulk operations for system maintenance
+- **FTP Account Management**: Create and manage SFTP users with role-based access
 
 ### Technical Features
 - **AWS Integration**: S3 storage for firmware files with organized folder structure
+- **SFTP Server**: Secure file transfer protocol with S3 backend
+- **Role-Based Access**: Admin (read/write) and Downloader (read-only) roles
 - **Real-time Database**: PostgreSQL with AWS RDS for metadata storage
 - **API-driven**: RESTful API architecture with Express.js backend
 - **Type Safety**: Full TypeScript implementation
@@ -45,13 +48,13 @@ A comprehensive web-based firmware management system for CraneEyes crane models.
 │   Vite + Tailwind│    │   REST API      │    │   AWS RDS       │
 └─────────────────┘    └─────────────────┘    └─────────────────┘
          │                       │                       │
-         │                       │                       │
-         ▼                       ▼                       ▼
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   File Storage  │    │   Authentication│    │   Activity Logs │
-│   AWS S3        │    │   Session-based │    │   Real-time     │
-│   Organized     │    │   Admin Access  │    │   Tracking      │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
+         │              ┌────────┴────────┐              │
+         ▼              ▼                 ▼              ▼
+┌─────────────────┐    ┌──────────┐    ┌──────────┐    ┌─────────────────┐
+│   File Storage  │    │   SFTP   │    │   Auth   │    │   Activity Logs │
+│   AWS S3        │◄──►│  Server  │    │  Session │    │   Real-time     │
+│   Organized     │    │  ssh2    │    │  Based   │    │   Tracking      │
+└─────────────────┘    └──────────┘    └──────────┘    └─────────────────┘
 ```
 
 ## 🚀 Quick Start
@@ -88,24 +91,35 @@ A comprehensive web-based firmware management system for CraneEyes crane models.
    
    # Insert initial data
    psql -h your-db-host -U postgres -d crane_firmware < database/init.sql
+   
+   # Add SFTP users table
+   psql -h your-db-host -U postgres -d crane_firmware < database/add-sftp-users.sql
    ```
 
 5. **Start development servers**
    ```bash
+   # Start API and frontend only
    npm run dev:full
+   
+   # Or start all services including SFTP
+   npm run dev:all
    ```
 
 6. **Access the application**
    - Frontend: http://localhost:5174
    - API: http://localhost:3001/api
+   - SFTP: Port 2222
    - Admin Login: `crane@dy.co.kr` / `1234`
 
 ## 📚 Documentation
 
 - **[API Documentation](docs/api/README.md)** - Complete REST API reference
 - **[Database Schema](docs/database/README.md)** - Database structure and management
+- **[CI/CD Guide](docs/CI_CD_GUIDE.md)** - Automated deployment pipeline
+- **[SSL Setup Guide](docs/SSL_SETUP_GUIDE.md)** - HTTPS/SSL configuration with Let's Encrypt
 - **[Deployment Guide](docs/deployment/README.md)** - Production deployment instructions
 - **[Development Guide](docs/development/README.md)** - Development setup and workflow
+- **[SFTP Guide](docs/SFTP_GUIDE.md)** - SFTP server setup and usage
 - **[Release Notes](docs/RELEASE_NOTES.md)** - Version history and changelog
 
 ## 🛠️ Development
@@ -114,8 +128,10 @@ A comprehensive web-based firmware management system for CraneEyes crane models.
 
 ```bash
 npm run dev          # Start frontend development server
-npm run server       # Start backend API server  
-npm run dev:full     # Start both servers concurrently
+npm run server       # Start backend API server
+npm run sftp         # Start SFTP server
+npm run dev:full     # Start API and frontend
+npm run dev:all      # Start all services (API, SFTP, frontend)
 npm run build        # Build for production
 npm run preview      # Preview production build
 ```
@@ -127,6 +143,42 @@ npm run generate-dummies    # Generate dummy firmware data
 npm run complete-reset      # Complete system reset
 npm run verify-system      # Verify system integrity
 ```
+
+## 🔐 SFTP Access
+
+The system includes a built-in SFTP server that provides secure file transfer access to firmware files stored in S3.
+
+### User Roles
+
+- **Admin**: Full access - upload, download, and delete firmware files
+- **Downloader**: Read-only access - browse and download firmware files only
+
+### Managing SFTP Users
+
+1. **Via Web Interface**: Navigate to Admin Panel → FTP 계정
+2. **Create Users**: Add new SFTP accounts with username, password, and role
+3. **Manage Access**: Enable/disable accounts or change roles as needed
+
+### Connecting via SFTP
+
+```bash
+# Connect to SFTP server
+sftp -P 2222 username@your-server-ip
+
+# Example commands
+sftp> ls /firmwares                          # List firmware files
+sftp> cd /firmwares/SS1416/v1.0             # Navigate to directory
+sftp> get firmware.bin                       # Download file (all users)
+sftp> put new-firmware.bin                   # Upload file (admin only)
+sftp> rm old-firmware.bin                    # Delete file (admin only)
+```
+
+### Security Notes
+
+- All SFTP connections are encrypted via SSH protocol
+- Passwords are hashed using bcrypt
+- Role-based access control enforces read/write permissions
+- Failed authentication attempts are logged
 
 ## 🔧 Configuration
 
@@ -183,16 +235,38 @@ craneeyes-firmware-manager/
 
 ## 🚀 Deployment
 
-For production deployment, see the [Deployment Guide](docs/deployment/README.md).
+### Automated CI/CD
 
-### Quick Production Setup
+The project uses **GitHub Actions** for automated deployment:
+
+- **CI (Pull Requests)**: Automatic code validation and build testing
+- **CD (main branch)**: Automatic deployment to EC2 production server
+
+**Deployment Flow**:
+```
+Code Push → Build → Test → Deploy to EC2 → Health Check → ✅ Live
+```
+
+See the [CI/CD Guide](docs/CI_CD_GUIDE.md) for details.
+
+### Manual Deployment
+
+For manual deployment, see the [Deployment Guide](docs/deployment/README.md).
+
+**Quick Deploy**:
+```bash
+# On EC2
+cd /home/ec2-user/craneeyes-firmware-manager
+./deploy.sh
+```
+
+### Production Setup
 
 1. Set up production environment variables
-2. Build the application: `npm run build`
-3. Configure reverse proxy (Nginx)
-4. Set up process management (PM2)
-5. Configure SSL certificates
-6. Set up monitoring and logging
+2. Configure GitHub Secrets (automated via `scripts/setup-github-secrets.sh`)
+3. Push to `main` branch (automatic deployment)
+4. Verify deployment in GitHub Actions
+5. Monitor services via PM2
 
 ## 📊 Monitoring
 

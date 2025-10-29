@@ -15,6 +15,7 @@ import Dashboard from './pages/admin/Dashboard';
 import AdminModels from './pages/admin/Models';
 import AdminFirmwares from './pages/admin/Firmwares';
 import AdminLogs from './pages/admin/Logs';
+import AdminSftpUsers from './pages/admin/SftpUsers';
 
 function App() {
   return (
@@ -48,6 +49,11 @@ function App() {
             <Route path="/admin/logs" element={
               <ProtectedRoute>
                 <AdminLogs />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/sftp-users" element={
+              <ProtectedRoute>
+                <AdminSftpUsers />
               </ProtectedRoute>
             } />
             

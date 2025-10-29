@@ -8,10 +8,13 @@
     "build": "tsc && vite build",
     "preview": "vite preview",
     "server": "node server.js",
+    "sftp": "node sftp-server.js",
     "dev:full": "concurrently \"npm run server\" \"npm run dev\"",
+    "dev:all": "concurrently \"npm run server\" \"npm run sftp\" \"npm run dev\"",
     "generate-dummies": "tsx scripts/generate-dummy-firmwares.ts",
     "complete-reset": "tsx scripts/complete-reset-rebuild.ts",
-    "verify-system": "tsx scripts/verify-system.ts"
+    "verify-system": "tsx scripts/verify-system.ts",
+    "create-sftp-users": "node scripts/create-default-sftp-users.js"
   },
   "keywords": [
     "firmware",
@@ -23,6 +26,7 @@
     "@aws-sdk/client-s3": "^3.913.0",
     "@aws-sdk/fetch-http-handler": "^3.370.0",
     "@aws-sdk/s3-request-presigner": "^3.913.0",
+    "bcrypt": "^6.0.0",
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
     "express": "^5.1.0",
@@ -30,12 +34,15 @@
     "pg": "^8.16.3",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "react-router-dom": "^6.16.0"
+    "react-router-dom": "^6.16.0",
+    "ssh2": "^1.17.0"
   },
   "devDependencies": {
+    "@types/bcrypt": "^6.0.0",
     "@types/node": "^20.8.0",
     "@types/react": "^18.2.25",
     "@types/react-dom": "^18.2.11",
+    "@types/ssh2": "^1.15.5",
     "@vitejs/plugin-react": "^4.1.0",
     "autoprefixer": "^10.4.16",
     "concurrently": "^9.2.1",

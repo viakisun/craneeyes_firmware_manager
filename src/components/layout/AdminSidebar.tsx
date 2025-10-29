@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Package, HardDrive, FileText, LogOut } from 'lucide-react';
+import { LayoutDashboard, Package, HardDrive, FileText, Users, LogOut } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
 export const AdminSidebar: React.FC = () => {
@@ -12,6 +12,7 @@ export const AdminSidebar: React.FC = () => {
     { path: '/admin/models', icon: Package, label: 'Models' },
     { path: '/admin/firmwares', icon: HardDrive, label: 'Firmwares' },
     { path: '/admin/logs', icon: FileText, label: 'Logs' },
+    { path: '/admin/sftp-users', icon: Users, label: 'FTP 계정' },
   ];
 
   const handleLogout = () => {

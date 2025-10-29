@@ -62,6 +62,9 @@ Thumbs.db
 # AWS
 .aws-sam/
 
+# SFTP
+sftp-host-key
+
 # Package manager lock files (optional - uncomment if you want to ignore them)
 # package-lock.json
 # yarn.lock

@@ -28,6 +28,15 @@ export interface Log {
   timestamp: string;
 }
 
+export interface SftpUser {
+  id: number;
+  username: string;
+  role: 'admin' | 'downloader';
+  enabled: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface User {
   id: string;
   email: string;

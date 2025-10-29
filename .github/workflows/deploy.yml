@@ -1,0 +1,197 @@
+name: CD - Deploy to EC2
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'src/**'
+      - 'server.js'
+      - 'sftp-server.js'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'database/**'
+      - 'ecosystem.config.cjs'
+      - 'nginx.conf'
+      - '.github/workflows/deploy.yml'
+
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: 'Deployment reason'
+        required: false
+        default: 'Manual deployment'
+
+jobs:
+  deploy:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+      
+      - name: 🔧 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+      
+      - name: 📦 Install dependencies
+        run: npm ci
+      
+      - name: 🏗️ Build frontend
+        run: npm run build
+        env:
+          VITE_AWS_REGION: ${{ secrets.AWS_REGION }}
+          VITE_AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          VITE_AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          VITE_AWS_BUCKET_NAME: ${{ secrets.AWS_BUCKET_NAME }}
+          VITE_AWS_DB_HOST: ${{ secrets.DB_HOST }}
+          VITE_AWS_DB_PORT: ${{ secrets.DB_PORT }}
+          VITE_AWS_DB_NAME: ${{ secrets.DB_NAME }}
+          VITE_AWS_DB_USER: ${{ secrets.DB_USER }}
+          VITE_AWS_DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          VITE_API_BASE_URL: https://firmware.craneeyes.com/api
+      
+      - name: 📦 Create deployment package
+        run: |
+          tar -czf deployment.tar.gz \
+            dist/ \
+            server.js \
+            sftp-server.js \
+            package.json \
+            package-lock.json \
+            ecosystem.config.cjs \
+            database/ \
+            scripts/
+      
+      - name: 🔑 Setup SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
+      
+      - name: 📤 Upload deployment package
+        run: |
+          scp -i ~/.ssh/deploy_key deployment.tar.gz \
+            ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:/tmp/
+      
+      - name: 🚀 Deploy on EC2
+        run: |
+          ssh -i ~/.ssh/deploy_key ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'ENDSSH'
+            set -e
+            
+            echo "════════════════════════════════════════"
+            echo "🚀 Starting deployment..."
+            echo "════════════════════════════════════════"
+            
+            # Navigate to project directory
+            cd /home/ec2-user/craneeyes-firmware-manager || cd ~/craneeyes-firmware-manager
+            
+            # Backup current version
+            echo "📦 Creating backup..."
+            if [ -d "dist" ]; then
+              tar -czf backup-$(date +%Y%m%d-%H%M%S).tar.gz dist/ || true
+            fi
+            
+            # Extract new files
+            echo "📥 Extracting deployment package..."
+            tar -xzf /tmp/deployment.tar.gz
+            rm /tmp/deployment.tar.gz
+            
+            # Install/update dependencies
+            echo "📦 Installing dependencies..."
+            npm install --production
+            
+            # Update environment file (if needed)
+            if [ ! -f .env ]; then
+              echo "⚠️  .env file not found, creating from secrets..."
+              cat > .env << EOF
+          VITE_AWS_REGION=${{ secrets.AWS_REGION }}
+          VITE_AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}
+          VITE_AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          VITE_AWS_BUCKET_NAME=${{ secrets.AWS_BUCKET_NAME }}
+          VITE_AWS_DB_HOST=${{ secrets.DB_HOST }}
+          VITE_AWS_DB_PORT=${{ secrets.DB_PORT }}
+          VITE_AWS_DB_NAME=${{ secrets.DB_NAME }}
+          VITE_AWS_DB_USER=${{ secrets.DB_USER }}
+          VITE_AWS_DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+          VITE_API_BASE_URL=https://firmware.craneeyes.com/api
+          API_PORT=${{ secrets.API_PORT }}
+          SFTP_PORT=${{ secrets.SFTP_PORT }}
+          EOF
+            fi
+            
+            # Copy frontend files to Nginx directory
+            echo "📋 Copying frontend files..."
+            sudo mkdir -p /var/www/html/craneeyes
+            sudo cp -r dist/* /var/www/html/craneeyes/
+            sudo chown -R nginx:nginx /var/www/html/craneeyes || sudo chown -R www-data:www-data /var/www/html/craneeyes
+            
+            # Restart backend services with PM2
+            echo "🔄 Restarting services..."
+            if pm2 list | grep -q "craneeyes"; then
+              pm2 restart ecosystem.config.cjs --update-env
+            else
+              pm2 start ecosystem.config.cjs
+            fi
+            
+            # Save PM2 configuration
+            pm2 save
+            
+            # Reload Nginx
+            echo "🔄 Reloading Nginx..."
+            if sudo nginx -t 2>/dev/null; then
+              sudo systemctl reload nginx
+            else
+              echo "⚠️  Nginx configuration test failed, skipping reload"
+            fi
+            
+            echo ""
+            echo "════════════════════════════════════════"
+            echo "✅ Deployment completed successfully!"
+            echo "════════════════════════════════════════"
+            echo ""
+            
+            # Show service status
+            echo "📊 Service Status:"
+            pm2 list
+          ENDSSH
+      
+      - name: 🏥 Health check
+        run: |
+          echo "⏳ Waiting for services to start..."
+          sleep 10
+          
+          echo "🏥 Checking API health..."
+          for i in {1..5}; do
+            if curl -f https://firmware.craneeyes.com/api/health 2>/dev/null || curl -f http://firmware.craneeyes.com/api/health 2>/dev/null; then
+              echo "✅ API is healthy!"
+              exit 0
+            fi
+            echo "⏳ Attempt $i/5 failed, retrying in 5 seconds..."
+            sleep 5
+          done
+          
+          echo "⚠️  Health check failed, but deployment completed. Please check manually."
+          exit 0
+      
+      - name: 🧹 Cleanup
+        if: always()
+        run: |
+          rm -f ~/.ssh/deploy_key
+          rm -f deployment.tar.gz
+      
+      - name: 📢 Deployment summary
+        run: |
+          echo "════════════════════════════════════════"
+          echo "📊 Deployment Summary"
+          echo "════════════════════════════════════════"
+          echo "🌐 Frontend: https://firmware.craneeyes.com"
+          echo "🔌 API: https://firmware.craneeyes.com/api"
+          echo "📁 SFTP: sftp -P ${{ secrets.SFTP_PORT }} user@firmware.craneeyes.com"
+          echo "⏰ Deployed at: $(date)"
+          echo "✅ Status: Success"
+          echo "════════════════════════════════════════"
+

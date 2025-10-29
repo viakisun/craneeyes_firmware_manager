@@ -1,0 +1,56 @@
+name: CI - Code Quality Check
+
+on:
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'src/**'
+      - 'server.js'
+      - 'sftp-server.js'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'tsconfig.json'
+      - '.github/workflows/ci.yml'
+
+jobs:
+  code-quality:
+    name: Code Quality & Build Test
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+      
+      - name: 🔧 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+      
+      - name: 📦 Install dependencies
+        run: npm ci
+      
+      - name: 🔍 TypeScript type check
+        run: npx tsc --noEmit
+      
+      - name: 🏗️ Build frontend
+        run: npm run build
+        env:
+          # Use dummy values for build
+          VITE_AWS_REGION: ap-northeast-2
+          VITE_AWS_ACCESS_KEY_ID: dummy
+          VITE_AWS_SECRET_ACCESS_KEY: dummy
+          VITE_AWS_BUCKET_NAME: dummy
+          VITE_AWS_DB_HOST: dummy
+          VITE_AWS_DB_PORT: 5432
+          VITE_AWS_DB_NAME: dummy
+          VITE_AWS_DB_USER: dummy
+          VITE_AWS_DB_PASSWORD: dummy
+          VITE_API_BASE_URL: http://localhost:3001/api
+      
+      - name: ✅ Build successful
+        run: |
+          echo "✅ All checks passed!"
+          echo "📦 Build artifacts created successfully"
+          ls -la dist/
+
