@@ -5,6 +5,8 @@ on:
     branches: [ main ]
     paths:
       - 'src/**'
+      - 'home/**'
+      - 'scripts/**'
       - 'server.js'
       - 'sftp-server.js'
       - 'package.json'
