@@ -132,12 +132,28 @@ jobs:
             echo "🚀 Starting deployment..."
             echo "════════════════════════════════════════"
             
-            # Navigate to project directory
-            cd /home/ec2-user/craneeyes-firmware-manager || cd ~/craneeyes-firmware-manager
+            # Kill any processes using required ports
+            echo "🔍 Checking for processes on ports 3001 and 2222..."
+            for port in 3001 2222; do
+              PID=$(lsof -t -i:$port 2>/dev/null || true)
+              if [ ! -z "$PID" ]; then
+                echo "⚠️  Killing process $PID on port $port"
+                kill -9 $PID 2>/dev/null || true
+                sleep 1
+              fi
+            done
             
-            # Backup current version
-            echo "📦 Creating backup..."
+            # Navigate to project directory (create if doesn't exist)
+            PROJECT_DIR="/home/ec2-user/craneeyes-firmware-manager"
+            if [ ! -d "$PROJECT_DIR" ]; then
+              echo "📁 First deployment - creating project directory..."
+              mkdir -p "$PROJECT_DIR"
+            fi
+            cd "$PROJECT_DIR"
+            
+            # Backup current version (if exists)
             if [ -d "dist" ]; then
+              echo "📦 Creating backup..."
               tar -czf backup-$(date +%Y%m%d-%H%M%S).tar.gz dist/ || true
             fi
             
