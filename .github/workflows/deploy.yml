@@ -83,12 +83,24 @@ jobs:
           echo "🔍 Verifying SSH key..."
           if ssh-keygen -l -f ~/.ssh/deploy_key >/dev/null 2>&1; then
             echo "✅ SSH key format is valid"
+            echo "Key fingerprint:"
             ssh-keygen -l -f ~/.ssh/deploy_key
+            echo "Key type:"
+            ssh-keygen -l -f ~/.ssh/deploy_key | awk '{print $NF}'
+            echo "Expected: SHA256:iPlXZTu7Lq0RcrrdyhTO2jWip1O8n/TZiIMkZjH4Gq8"
           else
             echo "❌ SSH key format is invalid"
             echo "Please check the EC2_SSH_KEY_BASE64 secret in GitHub settings"
             exit 1
           fi
+          
+          # Test if key file is readable
+          echo "🔍 Key file permissions:"
+          ls -la ~/.ssh/deploy_key
+          
+          # Verify we're connecting to correct host
+          echo "🔍 Target host: ${{ secrets.EC2_HOST }}"
+          echo "🔍 Target user: ${{ secrets.EC2_USER }}"
       
       - name: 🔌 Test SSH connection
         run: |
