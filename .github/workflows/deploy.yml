@@ -197,6 +197,20 @@ jobs:
             sudo cp -r home/* /var/www/html/craneeyes-landing/
             sudo chown -R nginx:nginx /var/www/html/craneeyes-landing || sudo chown -R www-data:www-data /var/www/html/craneeyes-landing
             
+            # Deploy Nginx configuration
+            echo "🔧 Deploying Nginx configuration..."
+            sudo cp nginx.conf /etc/nginx/conf.d/craneeyes.conf
+            
+            # Test Nginx configuration
+            echo "🧪 Testing Nginx configuration..."
+            sudo nginx -t
+            
+            # Reload Nginx
+            echo "🔄 Reloading Nginx..."
+            sudo systemctl reload nginx || sudo systemctl restart nginx
+            
+            echo "✅ Nginx configuration deployed and reloaded"
+            
             # Restart backend services with PM2
             echo "🔄 Restarting services..."
             if pm2 list | grep -q "craneeyes"; then
