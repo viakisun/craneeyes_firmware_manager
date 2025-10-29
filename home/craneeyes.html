@@ -1,0 +1,1200 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CRANEEYES - Industrial Crane Safety Management Platform</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --black: #000000;
+            --white: #FFFFFF;
+            --gray-dark: #1a1a1a;
+            --gray-medium: #333333;
+            --gray-light: #666666;
+            --border: #2a2a2a;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+            background: var(--black);
+            color: var(--white);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* Navigation */
+        nav {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            padding: 1.5rem 5%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 1000;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            letter-spacing: -0.05em;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: var(--white);
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: opacity 0.3s;
+        }
+
+        .nav-links a:hover {
+            opacity: 0.6;
+        }
+
+        /* Hero Section */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 8rem 5% 5rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                linear-gradient(90deg, var(--border) 1px, transparent 1px),
+                linear-gradient(var(--border) 1px, transparent 1px);
+            background-size: 50px 50px;
+            opacity: 0.3;
+            animation: gridMove 20s linear infinite;
+        }
+
+        @keyframes gridMove {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(50px, 50px); }
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 1;
+            max-width: 1200px;
+        }
+
+        .hero h1 {
+            font-size: clamp(3rem, 12vw, 9rem);
+            font-weight: 900;
+            letter-spacing: -0.05em;
+            line-height: 0.9;
+            margin-bottom: 2rem;
+            animation: fadeInUp 1s ease-out;
+        }
+
+        .hero-tagline {
+            font-size: clamp(1.2rem, 3vw, 2rem);
+            font-weight: 300;
+            margin-bottom: 1.5rem;
+            opacity: 0;
+            animation: fadeInUp 1s ease-out 0.3s forwards;
+        }
+
+        .hero-description {
+            font-size: clamp(1rem, 2vw, 1.2rem);
+            max-width: 700px;
+            margin: 0 auto 3rem;
+            color: var(--gray-light);
+            opacity: 0;
+            animation: fadeInUp 1s ease-out 0.6s forwards;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .cta-buttons {
+            display: flex;
+            gap: 1.5rem;
+            justify-content: center;
+            flex-wrap: wrap;
+            opacity: 0;
+            animation: fadeInUp 1s ease-out 0.9s forwards;
+        }
+
+        .btn {
+            padding: 1rem 2.5rem;
+            font-size: 1rem;
+            font-weight: 600;
+            text-decoration: none;
+            border: 2px solid var(--white);
+            transition: all 0.3s;
+            cursor: pointer;
+            background: transparent;
+            color: var(--white);
+        }
+
+        .btn-primary {
+            background: var(--white);
+            color: var(--black);
+        }
+
+        .btn-primary:hover {
+            background: transparent;
+            color: var(--white);
+        }
+
+        .btn-secondary:hover {
+            background: var(--white);
+            color: var(--black);
+        }
+
+        .scroll-indicator {
+            position: absolute;
+            bottom: 3rem;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 2rem;
+            animation: bounce 2s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateX(-50%) translateY(0); }
+            50% { transform: translateX(-50%) translateY(10px); }
+        }
+
+        /* Section Styles */
+        section {
+            padding: 8rem 5%;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 5rem;
+        }
+
+        .section-title {
+            font-size: clamp(2rem, 5vw, 4rem);
+            font-weight: 900;
+            letter-spacing: -0.03em;
+            margin-bottom: 1rem;
+        }
+
+        .section-subtitle {
+            font-size: clamp(1rem, 2vw, 1.3rem);
+            color: var(--gray-light);
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        /* Introduction */
+        .intro {
+            background: var(--gray-dark);
+            border-top: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .intro-content {
+            max-width: 900px;
+            margin: 0 auto 4rem;
+            text-align: center;
+            font-size: 1.3rem;
+            line-height: 1.8;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 3rem;
+            margin-top: 4rem;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 2rem;
+            border: 1px solid var(--border);
+            transition: transform 0.3s, border-color 0.3s;
+        }
+
+        .stat-item:hover {
+            transform: translateY(-5px);
+            border-color: var(--white);
+        }
+
+        .stat-number {
+            font-size: 3rem;
+            font-weight: 900;
+            display: block;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            font-size: 1rem;
+            color: var(--gray-light);
+        }
+
+        /* Features Grid */
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 2rem;
+        }
+
+        .feature-card {
+            padding: 3rem;
+            border: 1px solid var(--border);
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: var(--white);
+            transform: scaleX(0);
+            transition: transform 0.3s;
+        }
+
+        .feature-card:hover::before {
+            transform: scaleX(1);
+        }
+
+        .feature-card:hover {
+            border-color: var(--white);
+            transform: translateY(-5px);
+        }
+
+        .feature-number {
+            font-size: 3rem;
+            font-weight: 900;
+            opacity: 0.3;
+            margin-bottom: 1rem;
+        }
+
+        .feature-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+        }
+
+        .feature-description {
+            color: var(--gray-light);
+            line-height: 1.8;
+        }
+
+        /* User Roles */
+        .roles {
+            background: var(--gray-dark);
+        }
+
+        .roles-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 2rem;
+        }
+
+        .role-card {
+            padding: 3rem 2rem;
+            border: 2px solid var(--border);
+            text-align: center;
+            transition: all 0.3s;
+        }
+
+        .role-card:hover {
+            border-color: var(--white);
+            background: var(--gray-medium);
+        }
+
+        .role-icon {
+            font-size: 3rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .role-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .role-description {
+            color: var(--gray-light);
+            line-height: 1.8;
+        }
+
+        /* Monitoring Section */
+        .monitoring {
+            border-top: 1px solid var(--border);
+        }
+
+        .monitoring-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 3rem;
+            margin-top: 4rem;
+        }
+
+        .monitoring-category {
+            padding: 2rem;
+            border-left: 3px solid var(--white);
+            background: var(--gray-dark);
+        }
+
+        .monitoring-category h3 {
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            font-weight: 700;
+        }
+
+        .monitoring-category ul {
+            list-style: none;
+        }
+
+        .monitoring-category li {
+            padding: 0.8rem 0;
+            color: var(--gray-light);
+            border-bottom: 1px solid var(--border);
+            position: relative;
+            padding-left: 1.5rem;
+        }
+
+        .monitoring-category li::before {
+            content: '→';
+            position: absolute;
+            left: 0;
+            color: var(--white);
+        }
+
+        /* Technology */
+        .technology {
+            background: var(--gray-dark);
+        }
+
+        .tech-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+
+        .tech-block {
+            padding: 2.5rem;
+            border: 1px solid var(--border);
+        }
+
+        .tech-block h3 {
+            font-size: 1.3rem;
+            margin-bottom: 1.5rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        .tech-block ul {
+            list-style: none;
+        }
+
+        .tech-block li {
+            padding: 0.8rem 0;
+            color: var(--gray-light);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .tech-block li:last-child {
+            border-bottom: none;
+        }
+
+        /* Benefits */
+        .benefits-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 3rem;
+        }
+
+        .benefit-card {
+            padding: 3rem;
+            border: 1px solid var(--border);
+            position: relative;
+        }
+
+        .benefit-card::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: var(--white);
+            transform: scaleX(0);
+            transition: transform 0.3s;
+        }
+
+        .benefit-card:hover::after {
+            transform: scaleX(1);
+        }
+
+        .benefit-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+        }
+
+        .benefit-description {
+            color: var(--gray-light);
+            line-height: 1.8;
+            font-size: 1.1rem;
+        }
+
+        /* How It Works */
+        .how-it-works {
+            background: var(--gray-dark);
+        }
+
+        .steps {
+            display: grid;
+            gap: 3rem;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .step {
+            display: grid;
+            grid-template-columns: 100px 1fr;
+            gap: 2rem;
+            align-items: start;
+            padding: 2rem;
+            border-left: 2px solid var(--border);
+            transition: border-color 0.3s;
+        }
+
+        .step:hover {
+            border-color: var(--white);
+        }
+
+        .step-number {
+            font-size: 4rem;
+            font-weight: 900;
+            opacity: 0.3;
+            line-height: 1;
+        }
+
+        .step-content h3 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            text-transform: uppercase;
+        }
+
+        .step-content p {
+            color: var(--gray-light);
+            line-height: 1.8;
+            font-size: 1.1rem;
+        }
+
+        /* CTA Section */
+        .cta-section {
+            text-align: center;
+            padding: 10rem 5%;
+            background: var(--black);
+            border-top: 1px solid var(--border);
+        }
+
+        .cta-section h2 {
+            font-size: clamp(2rem, 5vw, 4rem);
+            font-weight: 900;
+            margin-bottom: 1.5rem;
+        }
+
+        .cta-section p {
+            font-size: 1.3rem;
+            color: var(--gray-light);
+            margin-bottom: 3rem;
+            max-width: 700px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .contact-form {
+            max-width: 600px;
+            margin: 0 auto;
+            display: grid;
+            gap: 1.5rem;
+        }
+
+        .form-group {
+            text-align: left;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 1rem;
+            background: var(--gray-dark);
+            border: 1px solid var(--border);
+            color: var(--white);
+            font-size: 1rem;
+            font-family: inherit;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--white);
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 150px;
+        }
+
+        .form-submit {
+            margin-top: 1rem;
+        }
+
+        /* Footer */
+        footer {
+            padding: 3rem 5%;
+            text-align: center;
+            border-top: 1px solid var(--border);
+            background: var(--black);
+        }
+
+        .footer-content {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .footer-logo {
+            font-size: 2rem;
+            font-weight: 900;
+            margin-bottom: 1rem;
+        }
+
+        .footer-text {
+            color: var(--gray-light);
+            margin-bottom: 2rem;
+        }
+
+        .footer-links {
+            display: flex;
+            gap: 2rem;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-bottom: 2rem;
+        }
+
+        .footer-links a {
+            color: var(--gray-light);
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+
+        .footer-links a:hover {
+            color: var(--white);
+        }
+
+        .copyright {
+            color: var(--gray-light);
+            font-size: 0.9rem;
+        }
+
+        /* Mobile Menu Toggle */
+        .menu-toggle {
+            display: none;
+            flex-direction: column;
+            gap: 5px;
+            cursor: pointer;
+        }
+
+        .menu-toggle span {
+            width: 25px;
+            height: 2px;
+            background: var(--white);
+            transition: all 0.3s;
+        }
+
+        /* Language Toggle */
+        .lang-toggle {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: var(--gray-dark);
+            border: 1px solid var(--border);
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .lang-toggle:hover {
+            border-color: var(--white);
+        }
+
+        .lang-toggle span {
+            transition: opacity 0.3s;
+        }
+
+        .lang-toggle span.inactive {
+            opacity: 0.4;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            nav {
+                padding: 1rem 5%;
+            }
+
+            .menu-toggle {
+                display: flex;
+            }
+
+            .lang-toggle {
+                position: absolute;
+                right: 60px;
+                font-size: 0.8rem;
+                padding: 0.4rem 0.8rem;
+            }
+
+            .nav-links {
+                position: fixed;
+                top: 70px;
+                left: -100%;
+                width: 100%;
+                height: calc(100vh - 70px);
+                background: var(--black);
+                flex-direction: column;
+                padding: 2rem 5%;
+                gap: 1rem;
+                transition: left 0.3s;
+                border-top: 1px solid var(--border);
+            }
+
+            .nav-links.active {
+                left: 0;
+            }
+
+            section {
+                padding: 5rem 5%;
+            }
+
+            .features-grid,
+            .roles-grid,
+            .monitoring-grid,
+            .tech-grid,
+            .benefits-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .step {
+                grid-template-columns: 60px 1fr;
+                gap: 1rem;
+                padding: 1.5rem;
+            }
+
+            .step-number {
+                font-size: 2.5rem;
+            }
+
+            .cta-section {
+                padding: 5rem 5%;
+            }
+        }
+
+        /* Smooth Reveal Animation */
+        .reveal {
+            opacity: 0;
+            transform: translateY(50px);
+            transition: all 0.8s ease-out;
+        }
+
+        .reveal.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav>
+        <div class="logo">CRANEEYES</div>
+        <div class="menu-toggle" onclick="toggleMenu()">
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
+        <ul class="nav-links" id="navLinks">
+            <li><a href="#features" data-ko="주요 기능" data-en="Features">주요 기능</a></li>
+            <li><a href="#roles" data-ko="사용자 역할" data-en="Roles">사용자 역할</a></li>
+            <li><a href="#monitoring" data-ko="실시간 모니터링" data-en="Monitoring">실시간 모니터링</a></li>
+            <li><a href="#technology" data-ko="기술" data-en="Technology">기술</a></li>
+            <li><a href="#benefits" data-ko="이점" data-en="Benefits">이점</a></li>
+            <li><a href="#contact" data-ko="문의하기" data-en="Contact">문의하기</a></li>
+        </ul>
+        <button class="lang-toggle" onclick="toggleLanguage()">
+            <span id="lang-ko">한</span>
+            <span>|</span>
+            <span id="lang-en" class="inactive">EN</span>
+        </button>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-content">
+            <h1>CRANEEYES</h1>
+            <p class="hero-tagline" data-ko="산업용 크레인 안전 관리 플랫폼" data-en="Industrial Crane Safety Management Platform">산업용 크레인 안전 관리 플랫폼</p>
+            <p class="hero-description" data-ko="건설 현장 크레인 운영을 위한 실시간 모니터링, 지능형 관리, 예측 안전 솔루션" data-en="Real-time monitoring, intelligent management, and predictive safety for construction site crane operations.">건설 현장 크레인 운영을 위한 실시간 모니터링, 지능형 관리, 예측 안전 솔루션</p>
+            <div class="cta-buttons">
+                <a href="#contact" class="btn btn-primary" data-ko="데모 요청" data-en="Request Demo">데모 요청</a>
+                <a href="#features" class="btn btn-secondary" data-ko="기능 살펴보기 ↓" data-en="Explore Features ↓">기능 살펴보기 ↓</a>
+            </div>
+        </div>
+        <div class="scroll-indicator">↓</div>
+    </section>
+
+    <!-- Introduction -->
+    <section class="intro" id="intro">
+        <div class="section-header reveal">
+            <h2 class="section-title" data-ko="지능형 기술로 크레인 운영 혁신" data-en="Transforming Crane Operations with Intelligence">지능형 기술로 크레인 운영 혁신</h2>
+        </div>
+        <div class="intro-content reveal">
+            <p data-ko="CraneEyes는 건설 현장의 크레인 운영을 혁신하는 통합 안전 관리 플랫폼입니다. 실시간 모니터링부터 자동화된 규정 준수 관리까지, 더 안전하고 효율적인 크레인 운영을 위한 종합 솔루션을 제공합니다." data-en="CraneEyes is an integrated safety management platform that revolutionizes construction site crane operations. From real-time monitoring to automated compliance management, we provide comprehensive solutions for safer, more efficient crane operations.">CraneEyes는 건설 현장의 크레인 운영을 혁신하는 통합 안전 관리 플랫폼입니다. 실시간 모니터링부터 자동화된 규정 준수 관리까지, 더 안전하고 효율적인 크레인 운영을 위한 종합 솔루션을 제공합니다.</p>
+        </div>
+        <div class="stats">
+            <div class="stat-item reveal">
+                <span class="stat-number">99.9%</span>
+                <span class="stat-label" data-ko="시스템 가동률" data-en="System Uptime">시스템 가동률</span>
+            </div>
+            <div class="stat-item reveal">
+                <span class="stat-number">60%</span>
+                <span class="stat-label" data-ko="사고 감소율" data-en="Accident Reduction">사고 감소율</span>
+            </div>
+            <div class="stat-item reveal">
+                <span class="stat-number">24/7</span>
+                <span class="stat-label" data-ko="실시간 모니터링" data-en="Real-Time Monitoring">실시간 모니터링</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features -->
+    <section id="features">
+        <div class="section-header reveal">
+            <h2 class="section-title" data-ko="완벽한 통제를 위한 설계" data-en="Engineered for Total Control">완벽한 통제를 위한 설계</h2>
+        </div>
+        <div class="features-grid">
+            <div class="feature-card reveal">
+                <div class="feature-number">01</div>
+                <h3 class="feature-title" data-ko="실시간 모니터링" data-en="Real-Time Monitoring">실시간 모니터링</h3>
+                <p class="feature-description" data-ko="크레인 하중, 붐 각도, GPS 위치, 운영 상태의 실시간 추적. 과부하 및 이상 감지에 대한 즉각적인 알림." data-en="Live tracking of crane load, boom angle, GPS position, and operational status. Instant alerts for overload and anomaly detection.">크레인 하중, 붐 각도, GPS 위치, 운영 상태의 실시간 추적. 과부하 및 이상 감지에 대한 즉각적인 알림.</p>
+            </div>
+            <div class="feature-card reveal">
+                <div class="feature-number">02</div>
+                <h3 class="feature-title" data-ko="지능형 안전 관리" data-en="Intelligent Safety Management">지능형 안전 관리</h3>
+                <p class="feature-description" data-ko="하중률 모니터링, 온도 경고, 사고 예방을 위한 즉각적인 비상 알림 기능을 갖춘 자동화된 안전 프로토콜." data-en="Automated safety protocols with load ratio monitoring, temperature warnings, and instant emergency notifications to prevent accidents.">하중률 모니터링, 온도 경고, 사고 예방을 위한 즉각적인 비상 알림 기능을 갖춘 자동화된 안전 프로토콜.</p>
+            </div>
+            <div class="feature-card reveal">
+                <div class="feature-number">03</div>
+                <h3 class="feature-title" data-ko="디지털 서류 관리" data-en="Digital Document Management">디지털 서류 관리</h3>
+                <p class="feature-description" data-ko="승인 워크플로우 및 클라우드 스토리지를 통한 자격증, 보험, 안전 교육 서류의 효율적인 관리." data-en="Streamlined certification, insurance, and safety training document handling with approval workflows and cloud storage.">승인 워크플로우 및 클라우드 스토리지를 통한 자격증, 보험, 안전 교육 서류의 효율적인 관리.</p>
+            </div>
+            <div class="feature-card reveal">
+                <div class="feature-number">04</div>
+                <h3 class="feature-title" data-ko="GPS 기반 출퇴근 관리" data-en="GPS-Based Attendance">GPS 기반 출퇴근 관리</h3>
+                <p class="feature-description" data-ko="정밀한 위치 기반 시간 추적 및 근태 분석을 통한 운전자의 자동 체크인/체크아웃 검증." data-en="Automatic check-in/check-out verification for operators with precise location-based time tracking and attendance analytics.">정밀한 위치 기반 시간 추적 및 근태 분석을 통한 운전자의 자동 체크인/체크아웃 검증.</p>
+            </div>
+            <div class="feature-card reveal">
+                <div class="feature-number">05</div>
+                <h3 class="feature-title" data-ko="다중 역할 접근 제어" data-en="Multi-Role Access Control">다중 역할 접근 제어</h3>
+                <p class="feature-description" data-ko="안전 관리자, 크레인 소유주, 운전자, 제조사를 위한 역할별 맞춤형 대시보드와 기능." data-en="Customized dashboards for Safety Managers, Crane Owners, Operators, and Manufacturers with role-specific functionality.">안전 관리자, 크레인 소유주, 운전자, 제조사를 위한 역할별 맞춤형 대시보드와 기능.</p>
+            </div>
+            <div class="feature-card reveal">
+                <div class="feature-number">06</div>
+                <h3 class="feature-title" data-ko="예측 분석" data-en="Predictive Analytics">예측 분석</h3>
+                <p class="feature-description" data-ko="전체 차량에 걸친 운영 효율성, 유지보수 일정, 성능 최적화를 위한 데이터 기반 인사이트." data-en="Data-driven insights for operational efficiency, maintenance scheduling, and performance optimization across your fleet.">전체 차량에 걸친 운영 효율성, 유지보수 일정, 성능 최적화를 위한 데이터 기반 인사이트.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- User Roles -->
+    <section class="roles" id="roles">
+        <div class="section-header reveal">
+            <h2 class="section-title" data-ko="모든 이해관계자를 위한 설계" data-en="Built for Every Stakeholder">모든 이해관계자를 위한 설계</h2>
+        </div>
+        <div class="roles-grid">
+            <div class="role-card reveal">
+                <div class="role-icon">🏗️</div>
+                <h3 class="role-title" data-ko="안전 관리자" data-en="Safety Manager">안전 관리자</h3>
+                <p class="role-description" data-ko="크레인 배정, 운전자 관리, 서류 검증, 실시간 안전 모니터링을 통한 완벽한 현장 감독." data-en="Complete site oversight with crane assignment, operator management, document verification, and real-time safety monitoring.">크레인 배정, 운전자 관리, 서류 검증, 실시간 안전 모니터링을 통한 완벽한 현장 감독.</p>
+            </div>
+            <div class="role-card reveal">
+                <div class="role-icon">🏢</div>
+                <h3 class="role-title" data-ko="크레인 소유주" data-en="Crane Owner">크레인 소유주</h3>
+                <p class="role-description" data-ko="배치 추적, 사용 분석, 유지보수 일정, 수익 최적화를 통한 차량 관리." data-en="Fleet management with deployment tracking, usage analytics, maintenance scheduling, and revenue optimization.">배치 추적, 사용 분석, 유지보수 일정, 수익 최적화를 통한 차량 관리.</p>
+            </div>
+            <div class="role-card reveal">
+                <div class="role-icon">👷</div>
+                <h3 class="role-title" data-ko="운전자" data-en="Operator">운전자</h3>
+                <p class="role-description" data-ko="GPS 출퇴근 관리, 서류 제출, 작업 일정, 모바일 최적화 인터페이스를 통한 간편한 일상 업무." data-en="Simplified daily operations with GPS attendance, document submission, work schedules, and mobile-first interface.">GPS 출퇴근 관리, 서류 제출, 작업 일정, 모바일 최적화 인터페이스를 통한 간편한 일상 업무.</p>
+            </div>
+            <div class="role-card reveal">
+                <div class="role-icon">🏭</div>
+                <h3 class="role-title" data-ko="제조사" data-en="Manufacturer">제조사</h3>
+                <p class="role-description" data-ko="모델 관리, 성능 분석, 품질 관리, 지속적인 개선을 위한 차량 전체 데이터 인사이트." data-en="Model management, performance analytics, quality control, and fleet-wide data insights for continuous improvement.">모델 관리, 성능 분석, 품질 관리, 지속적인 개선을 위한 차량 전체 데이터 인사이트.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Live Monitoring -->
+    <section class="monitoring" id="monitoring">
+        <div class="section-header reveal">
+            <h2 class="section-title" data-ko="미션 크리티컬 데이터, 실시간 인사이트" data-en="Mission-Critical Data, Real-Time Insights">미션 크리티컬 데이터, 실시간 인사이트</h2>
+        </div>
+        <div class="monitoring-grid">
+            <div class="monitoring-category reveal">
+                <h3 data-ko="모니터링 파라미터" data-en="MONITORED PARAMETERS">모니터링 파라미터</h3>
+                <ul>
+                    <li data-ko="하중률 및 로드셀 값" data-en="Load Ratio & Load Cell Values">하중률 및 로드셀 값</li>
+                    <li data-ko="붐 각도 및 선회 각도" data-en="Boom Angle & Swing Angle">붐 각도 및 선회 각도</li>
+                    <li data-ko="작업 반경 및 GPS 위치" data-en="Working Radius & GPS Location">작업 반경 및 GPS 위치</li>
+                    <li data-ko="엔진 상태 및 냉각수 온도" data-en="Engine Status & Coolant Temperature">엔진 상태 및 냉각수 온도</li>
+                    <li data-ko="온라인/오프라인 연결 상태" data-en="Online/Offline Connection Status">온라인/오프라인 연결 상태</li>
+                </ul>
+            </div>
+            <div class="monitoring-category reveal">
+                <h3 data-ko="지능형 알림" data-en="INTELLIGENT ALERTS">지능형 알림</h3>
+                <ul>
+                    <li data-ko="과부하 경고 (80%+ / 90%+ 임계값)" data-en="Overload Warning (80%+ / 90%+ thresholds)">과부하 경고 (80%+ / 90%+ 임계값)</li>
+                    <li data-ko="에러 코드 감지 및 진단" data-en="Error Code Detection & Diagnostics">에러 코드 감지 및 진단</li>
+                    <li data-ko="온도 경고 (80°C / 90°C 수준)" data-en="Temperature Alerts (80°C / 90°C levels)">온도 경고 (80°C / 90°C 수준)</li>
+                    <li data-ko="연결 상태 변경" data-en="Connection Status Changes">연결 상태 변경</li>
+                    <li data-ko="실시간 비상 알림" data-en="Real-time Emergency Notifications">실시간 비상 알림</li>
+                </ul>
+            </div>
+            <div class="monitoring-category reveal">
+                <h3 data-ko="데이터 갱신" data-en="DATA REFRESH">데이터 갱신</h3>
+                <ul>
+                    <li data-ko="매초 실시간 업데이트" data-en="Real-time updates every second">매초 실시간 업데이트</li>
+                    <li data-ko="60초 오프라인 감지" data-en="60-second offline detection">60초 오프라인 감지</li>
+                    <li data-ko="위급 상황에 즉각 대응" data-en="Immediate response to critical situations">위급 상황에 즉각 대응</li>
+                    <li data-ko="이력 데이터 보존" data-en="Historical data retention">이력 데이터 보존</li>
+                    <li data-ko="완전한 감사 추적" data-en="Complete audit trail">완전한 감사 추적</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <!-- Technology -->
+    <section class="technology" id="technology">
+        <div class="section-header reveal">
+            <h2 class="section-title" data-ko="엔터프라이즈급 인프라" data-en="Enterprise-Grade Infrastructure">엔터프라이즈급 인프라</h2>
+        </div>
+        <div class="tech-grid">
+            <div class="tech-block reveal">
+                <h3 data-ko="플랫폼 보안" data-en="Platform Security">플랫폼 보안</h3>
+                <ul>
+                    <li data-ko="역할 기반 접근 제어" data-en="Role-based access control">역할 기반 접근 제어</li>
+                    <li data-ko="조직 수준 데이터 격리" data-en="Organization-level data isolation">조직 수준 데이터 격리</li>
+                    <li data-ko="종단간 암호화" data-en="End-to-end encryption">종단간 암호화</li>
+                    <li data-ko="자동 클라우드 백업" data-en="Automated cloud backup">자동 클라우드 백업</li>
+                    <li data-ko="99.9% 가동률 SLA" data-en="99.9% uptime SLA">99.9% 가동률 SLA</li>
+                </ul>
+            </div>
+            <div class="tech-block reveal">
+                <h3 data-ko="통합" data-en="Integration">통합</h3>
+                <ul>
+                    <li data-ko="범용 크레인 호환성" data-en="Universal crane compatibility">범용 크레인 호환성</li>
+                    <li data-ko="GPS/LTE 연결" data-en="GPS/LTE connectivity">GPS/LTE 연결</li>
+                    <li data-ko="타사 시스템용 RESTful API" data-en="RESTful API for third-party systems">타사 시스템용 RESTful API</li>
+                    <li data-ko="iOS 및 Android용 모바일 SDK" data-en="Mobile SDK for iOS & Android">iOS 및 Android용 모바일 SDK</li>
+                    <li data-ko="레거시 시스템 지원" data-en="Legacy system support">레거시 시스템 지원</li>
+                </ul>
+            </div>
+            <div class="tech-block reveal">
+                <h3 data-ko="확장성" data-en="Scalability">확장성</h3>
+                <ul>
+                    <li data-ko="멀티 테넌트 아키텍처" data-en="Multi-tenant architecture">멀티 테넌트 아키텍처</li>
+                    <li data-ko="실시간 데이터 처리" data-en="Real-time data processing">실시간 데이터 처리</li>
+                    <li data-ko="자동화된 보고 및 분석" data-en="Automated reporting & analytics">자동화된 보고 및 분석</li>
+                    <li data-ko="이력 데이터 보존" data-en="Historical data retention">이력 데이터 보존</li>
+                    <li data-ko="클라우드 네이티브 인프라" data-en="Cloud-native infrastructure">클라우드 네이티브 인프라</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <!-- Benefits -->
+    <section class="benefits" id="benefits">
+        <div class="section-header reveal">
+            <h2 class="section-title" data-ko="운영 전반에 걸친 측정 가능한 영향" data-en="Measurable Impact Across Operations">운영 전반에 걸친 측정 가능한 영향</h2>
+        </div>
+        <div class="benefits-grid">
+            <div class="benefit-card reveal">
+                <h3 class="benefit-title" data-ko="안전 우수성" data-en="Safety Excellence">안전 우수성</h3>
+                <p class="benefit-description" data-ko="실시간 모니터링, 자동화된 알림, 종합적인 안전 프로토콜로 작업장 사고를 최대 60% 감소시킵니다." data-en="Reduce workplace accidents by up to 60% with real-time monitoring, automated alerts, and comprehensive safety protocols.">실시간 모니터링, 자동화된 알림, 종합적인 안전 프로토콜로 작업장 사고를 최대 60% 감소시킵니다.</p>
+            </div>
+            <div class="benefit-card reveal">
+                <h3 class="benefit-title" data-ko="운영 효율성" data-en="Operational Efficiency">운영 효율성</h3>
+                <p class="benefit-description" data-ko="자동화된 출퇴근 추적, 디지털 서류 워크플로우, 즉각적인 승인 프로세스로 현장 관리를 효율화합니다." data-en="Streamline site management with automated attendance tracking, digital document workflows, and instant approval processes.">자동화된 출퇴근 추적, 디지털 서류 워크플로우, 즉각적인 승인 프로세스로 현장 관리를 효율화합니다.</p>
+            </div>
+            <div class="benefit-card reveal">
+                <h3 class="benefit-title" data-ko="비용 절감" data-en="Cost Reduction">비용 절감</h3>
+                <p class="benefit-description" data-ko="데이터 기반 의사결정으로 유지보수 일정을 최적화하고, 다운타임을 줄이며, 자원 배분을 개선합니다." data-en="Optimize maintenance schedules, reduce downtime, and improve resource allocation with data-driven decision making.">데이터 기반 의사결정으로 유지보수 일정을 최적화하고, 다운타임을 줄이며, 자원 배분을 개선합니다.</p>
+            </div>
+            <div class="benefit-card reveal">
+                <h3 class="benefit-title" data-ko="규정 준수 보장" data-en="Compliance Assurance">규정 준수 보장</h3>
+                <p class="benefit-description" data-ko="규제 준수를 위한 완벽한 감사 추적, 자동화된 서류 검증, 투명한 승인 프로세스를 유지합니다." data-en="Maintain complete audit trails, automated document verification, and transparent approval processes for regulatory compliance.">규제 준수를 위한 완벽한 감사 추적, 자동화된 서류 검증, 투명한 승인 프로세스를 유지합니다.</p>
+            </div>
+            <div class="benefit-card reveal">
+                <h3 class="benefit-title" data-ko="차량 최적화" data-en="Fleet Optimization">차량 최적화</h3>
+                <p class="benefit-description" data-ko="지능형 배치 일정, 성능 분석, 예측 유지보수 인사이트로 장비 활용도를 극대화합니다." data-en="Maximize equipment utilization with intelligent deployment scheduling, performance analytics, and predictive maintenance insights.">지능형 배치 일정, 성능 분석, 예측 유지보수 인사이트로 장비 활용도를 극대화합니다.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- How It Works -->
+    <section class="how-it-works">
+        <div class="section-header reveal">
+            <h2 class="section-title" data-ko="4단계로 간편한 배포" data-en="Seamless Deployment in 4 Steps">4단계로 간편한 배포</h2>
+        </div>
+        <div class="steps">
+            <div class="step reveal">
+                <div class="step-number">01</div>
+                <div class="step-content">
+                    <h3 data-ko="설정" data-en="Setup">설정</h3>
+                    <p data-ko="현장, 크레인, 팀원을 등록하세요. 역할 기반 접근 권한과 안전 파라미터를 구성합니다." data-en="Register your sites, cranes, and team members. Configure role-based access and safety parameters.">현장, 크레인, 팀원을 등록하세요. 역할 기반 접근 권한과 안전 파라미터를 구성합니다.</p>
+                </div>
+            </div>
+            <div class="step reveal">
+                <div class="step-number">02</div>
+                <div class="step-content">
+                    <h3 data-ko="연결" data-en="Connect">연결</h3>
+                    <p data-ko="차량에 CraneEyes 센서와 컨트롤러를 설치하세요. 운전자용 GPS 추적을 활성화합니다." data-en="Install CraneEyes sensors and controllers on your fleet. Activate GPS tracking for operators.">차량에 CraneEyes 센서와 컨트롤러를 설치하세요. 운전자용 GPS 추적을 활성화합니다.</p>
+                </div>
+            </div>
+            <div class="step reveal">
+                <div class="step-number">03</div>
+                <div class="step-content">
+                    <h3 data-ko="운영" data-en="Operate">운영</h3>
+                    <p data-ko="직관적인 대시보드를 통해 실시간 데이터를 모니터링하고, 서류를 관리하고, 출퇴근을 추적하고, 즉각적인 알림을 받으세요." data-en="Monitor real-time data, manage documents, track attendance, and receive instant alerts through intuitive dashboards.">직관적인 대시보드를 통해 실시간 데이터를 모니터링하고, 서류를 관리하고, 출퇴근을 추적하고, 즉각적인 알림을 받으세요.</p>
+                </div>
+            </div>
+            <div class="step reveal">
+                <div class="step-number">04</div>
+                <div class="step-content">
+                    <h3 data-ko="최적화" data-en="Optimize">최적화</h3>
+                    <p data-ko="AI 기반 인사이트로 성능 메트릭을 분석하고, 유지보수를 예약하고, 운영을 지속적으로 개선하세요." data-en="Analyze performance metrics, schedule maintenance, and continuously improve operations with AI-powered insights.">AI 기반 인사이트로 성능 메트릭을 분석하고, 유지보수를 예약하고, 운영을 지속적으로 개선하세요.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="cta-section" id="contact">
+        <div class="reveal">
+            <h2 data-ko="크레인 운영을 한 단계 업그레이드할 준비가 되셨나요?" data-en="Ready to Elevate Your Crane Operations?">크레인 운영을 한 단계 업그레이드할 준비가 되셨나요?</h2>
+            <p data-ko="CraneEyes 지능형 관리 플랫폼으로 건설 현장의 안전과 효율성을 혁신하세요." data-en="Transform your construction site safety and efficiency with CraneEyes intelligent management platform.">CraneEyes 지능형 관리 플랫폼으로 건설 현장의 안전과 효율성을 혁신하세요.</p>
+        </div>
+        <form class="contact-form reveal" onsubmit="handleSubmit(event)">
+            <div class="form-group">
+                <label for="name" data-ko="성함" data-en="Full Name">성함</label>
+                <input type="text" id="name" name="name" required>
+            </div>
+            <div class="form-group">
+                <label for="company" data-ko="회사명" data-en="Company Name">회사명</label>
+                <input type="text" id="company" name="company" required>
+            </div>
+            <div class="form-group">
+                <label for="email" data-ko="이메일 주소" data-en="Email Address">이메일 주소</label>
+                <input type="email" id="email" name="email" required>
+            </div>
+            <div class="form-group">
+                <label for="phone" data-ko="전화번호" data-en="Phone Number">전화번호</label>
+                <input type="tel" id="phone" name="phone" required>
+            </div>
+            <div class="form-group">
+                <label for="cranes" data-ko="크레인 대수" data-en="Number of Cranes">크레인 대수</label>
+                <input type="number" id="cranes" name="cranes" min="1">
+            </div>
+            <div class="form-group">
+                <label for="message" data-ko="메시지" data-en="Message">메시지</label>
+                <textarea id="message" name="message" rows="5"></textarea>
+            </div>
+            <div class="form-submit">
+                <button type="submit" class="btn btn-primary" data-ko="데모 요청" data-en="Request Demo">데모 요청</button>
+            </div>
+        </form>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="footer-content">
+            <div class="footer-logo">CRANEEYES</div>
+            <p class="footer-text" data-ko="산업용 크레인 안전 관리 플랫폼" data-en="Industrial Crane Safety Management Platform">산업용 크레인 안전 관리 플랫폼</p>
+            <div class="footer-links">
+                <a href="#features" data-ko="주요 기능" data-en="Features">주요 기능</a>
+                <a href="#roles" data-ko="사용자 역할" data-en="User Roles">사용자 역할</a>
+                <a href="#monitoring" data-ko="실시간 모니터링" data-en="Monitoring">실시간 모니터링</a>
+                <a href="#technology" data-ko="기술" data-en="Technology">기술</a>
+                <a href="#benefits" data-ko="이점" data-en="Benefits">이점</a>
+                <a href="#contact" data-ko="문의하기" data-en="Contact">문의하기</a>
+            </div>
+            <p class="copyright">© 2025 DY Innovate | CraneEyes<br>Powered by VIASOFT.AI | [email protected]</p>
+        </div>
+    </footer>
+
+    <script>
+        // Language Toggle
+        let currentLang = 'ko'; // 기본 언어: 한국어
+
+        function toggleLanguage() {
+            currentLang = currentLang === 'ko' ? 'en' : 'ko';
+            
+            // Update all elements with data-ko and data-en attributes
+            document.querySelectorAll('[data-ko][data-en]').forEach(element => {
+                const text = element.getAttribute(`data-${currentLang}`);
+                if (text) {
+                    if (element.tagName === 'INPUT' || element.tagName === 'TEXTAREA' || element.tagName === 'BUTTON') {
+                        // For form elements, update placeholder or value
+                        if (element.hasAttribute('placeholder')) {
+                            element.placeholder = text;
+                        } else {
+                            element.textContent = text;
+                        }
+                    } else {
+                        element.textContent = text;
+                    }
+                }
+            });
+
+            // Update language toggle button state
+            const langKo = document.getElementById('lang-ko');
+            const langEn = document.getElementById('lang-en');
+            
+            if (currentLang === 'ko') {
+                langKo.classList.remove('inactive');
+                langEn.classList.add('inactive');
+            } else {
+                langKo.classList.add('inactive');
+                langEn.classList.remove('inactive');
+            }
+
+            // Save preference
+            localStorage.setItem('preferredLanguage', currentLang);
+        }
+
+        // Load saved language preference on page load
+        window.addEventListener('DOMContentLoaded', () => {
+            const savedLang = localStorage.getItem('preferredLanguage');
+            if (savedLang && savedLang !== currentLang) {
+                toggleLanguage();
+            }
+        });
+
+        // Mobile Menu Toggle
+        function toggleMenu() {
+            const navLinks = document.getElementById('navLinks');
+            navLinks.classList.toggle('active');
+        }
+
+        // Close menu when clicking a link
+        document.querySelectorAll('.nav-links a').forEach(link => {
+            link.addEventListener('click', () => {
+                document.getElementById('navLinks').classList.remove('active');
+            });
+        });
+
+        // Scroll Reveal Animation
+        function reveal() {
+            const reveals = document.querySelectorAll('.reveal');
+            
+            reveals.forEach(element => {
+                const windowHeight = window.innerHeight;
+                const elementTop = element.getBoundingClientRect().top;
+                const elementVisible = 150;
+                
+                if (elementTop < windowHeight - elementVisible) {
+                    element.classList.add('active');
+                }
+            });
+        }
+
+        window.addEventListener('scroll', reveal);
+        reveal(); // Initial check
+
+        // Form Submit Handler
+        function handleSubmit(event) {
+            event.preventDefault();
+            const successMessage = currentLang === 'ko' 
+                ? '문의해 주셔서 감사합니다! 곧 연락드리겠습니다.' 
+                : 'Thank you for your interest! We will contact you shortly.';
+            alert(successMessage);
+            event.target.reset();
+        }
+
+        // Smooth scroll for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+    </script>
+</body>
+</html>

@@ -300,9 +300,10 @@ pm2 logs
 
 모든 체크리스트를 완료했다면:
 
-✅ **Frontend**: https://firmware.craneeyes.com
+✅ **Landing Page**: https://craneeyes.com
+✅ **Firmware Manager**: https://firmware.craneeyes.com
 ✅ **API**: https://firmware.craneeyes.com/api
-✅ **Admin**: https://firmware.craneeyes.com/admin
+✅ **Admin Panel**: https://firmware.craneeyes.com/admin
 ✅ **SFTP**: sftp -P 2222 user@firmware.craneeyes.com
 ✅ **CI/CD**: Automated via GitHub Actions
 ✅ **SSL**: Cloudflare Flexible (Automatic)

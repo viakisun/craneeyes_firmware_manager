@@ -49,19 +49,31 @@ VITE_API_BASE_URL=/api  # or https://firmware.craneeyes.com/api
 
 ### 1. DNS 설정
 
-**A 레코드 추가**:
+**A 레코드 추가** (Cloudflare):
+
 ```
+# Landing page (루트 도메인)
+Type: A
+Host: @  (또는 craneeyes.com)
+Value: 54.180.29.96
+Proxy: Proxied (☁️ 주황색)
+TTL: Auto
+
+# Firmware manager (서브도메인)
 Type: A
 Host: firmware
-Domain: craneeyes.com
 Value: 54.180.29.96
-TTL: Auto or 300
+Proxy: Proxied (☁️ 주황색)
+TTL: Auto
 ```
 
 **확인**:
 ```bash
+nslookup craneeyes.com
+# Expected: Cloudflare IP (proxied)
+
 nslookup firmware.craneeyes.com
-# Expected: 54.180.29.96
+# Expected: Cloudflare IP (proxied)
 ```
 
 ### 2. EC2 보안 그룹
@@ -94,7 +106,11 @@ sudo certbot --nginx -d firmware.craneeyes.com
 
 ## 📊 배포 후 접속 URL
 
-### Frontend (Public)
+### Landing Page
+- **URL**: https://craneeyes.com
+- **Description**: 회사 소개 및 제품 소개 페이지
+
+### Firmware Manager (Public)
 - **HTTP**: http://firmware.craneeyes.com
 - **HTTPS**: https://firmware.craneeyes.com ← 최종 사용
 
@@ -189,7 +205,14 @@ pm2 restart ecosystem.config.cjs
 
 ## ✅ 테스트 체크리스트
 
-### Frontend
+### Landing Page
+- [ ] https://craneeyes.com (Landing page loads)
+- [ ] https://www.craneeyes.com (www redirect works)
+- [ ] Language toggle (KO/EN) works
+- [ ] Contact form works
+- [ ] SSL certificate valid (🔒 padlock in browser)
+
+### Firmware Manager
 - [ ] http://firmware.craneeyes.com (HTTP to HTTPS redirect)
 - [ ] https://firmware.craneeyes.com (Main page loads)
 - [ ] https://firmware.craneeyes.com/admin (Admin login works)
@@ -205,8 +228,9 @@ pm2 restart ecosystem.config.cjs
 - [ ] Can list files: `ls /firmwares`
 - [ ] Can download files: `get firmware.bin`
 
-### SSL Certificate
-- [ ] Valid certificate from Let's Encrypt
+### SSL Certificates (Cloudflare)
+- [ ] https://craneeyes.com - Valid certificate
+- [ ] https://firmware.craneeyes.com - Valid certificate
 - [ ] No browser warnings
 - [ ] Grade A on SSL Labs test
 

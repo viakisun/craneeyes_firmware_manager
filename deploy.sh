@@ -65,6 +65,12 @@ sudo rm -rf /var/www/html/craneeyes/*
 sudo cp -r dist/* /var/www/html/craneeyes/
 
 echo ""
+echo "Step 5-1: Copying landing page to web directory..."
+sudo mkdir -p /var/www/html/craneeyes-landing
+sudo rm -rf /var/www/html/craneeyes-landing/*
+sudo cp -r home/* /var/www/html/craneeyes-landing/
+
+echo ""
 echo "Step 6: Restarting backend server with PM2..."
 pm2 restart ecosystem.config.cjs --update-env || pm2 start ecosystem.config.cjs
 

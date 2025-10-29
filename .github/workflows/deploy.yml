@@ -57,6 +57,7 @@ jobs:
         run: |
           tar -czf deployment.tar.gz \
             dist/ \
+            home/ \
             server.js \
             sftp-server.js \
             package.json \
@@ -129,6 +130,12 @@ jobs:
             sudo cp -r dist/* /var/www/html/craneeyes/
             sudo chown -R nginx:nginx /var/www/html/craneeyes || sudo chown -R www-data:www-data /var/www/html/craneeyes
             
+            # Copy landing page to Nginx directory
+            echo "📋 Copying landing page..."
+            sudo mkdir -p /var/www/html/craneeyes-landing
+            sudo cp -r home/* /var/www/html/craneeyes-landing/
+            sudo chown -R nginx:nginx /var/www/html/craneeyes-landing || sudo chown -R www-data:www-data /var/www/html/craneeyes-landing
+            
             # Restart backend services with PM2
             echo "🔄 Restarting services..."
             if pm2 list | grep -q "craneeyes"; then
@@ -188,7 +195,8 @@ jobs:
           echo "════════════════════════════════════════"
           echo "📊 Deployment Summary"
           echo "════════════════════════════════════════"
-          echo "🌐 Frontend: https://firmware.craneeyes.com"
+          echo "🏠 Landing: https://craneeyes.com"
+          echo "🌐 Firmware Manager: https://firmware.craneeyes.com"
           echo "🔌 API: https://firmware.craneeyes.com/api"
           echo "📁 SFTP: sftp -P ${{ secrets.SFTP_PORT }} user@firmware.craneeyes.com"
           echo "⏰ Deployed at: $(date)"
