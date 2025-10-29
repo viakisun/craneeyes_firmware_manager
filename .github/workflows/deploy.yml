@@ -72,8 +72,8 @@ jobs:
         run: |
           mkdir -p ~/.ssh
           
-          # Save SSH key with proper formatting
-          printf "%s\n" "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/deploy_key
+          # Decode base64 SSH key
+          echo "${{ secrets.EC2_SSH_KEY_BASE64 }}" | base64 -d > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
           
           # Add EC2 host to known_hosts
@@ -83,15 +83,17 @@ jobs:
           echo "🔍 Verifying SSH key..."
           if ssh-keygen -l -f ~/.ssh/deploy_key >/dev/null 2>&1; then
             echo "✅ SSH key format is valid"
+            ssh-keygen -l -f ~/.ssh/deploy_key
           else
             echo "❌ SSH key format is invalid"
-            echo "Please check the EC2_SSH_KEY secret in GitHub settings"
+            echo "Please check the EC2_SSH_KEY_BASE64 secret in GitHub settings"
             exit 1
           fi
       
       - name: 🔌 Test SSH connection
         run: |
           ssh -i ~/.ssh/deploy_key \
+            -vvv \
             -o StrictHostKeyChecking=no \
             -o UserKnownHostsFile=/dev/null \
             -o ConnectTimeout=10 \
@@ -108,6 +110,7 @@ jobs:
       - name: 🚀 Deploy on EC2
         run: |
           ssh -i ~/.ssh/deploy_key \
+            -vvv \
             -o StrictHostKeyChecking=no \
             -o UserKnownHostsFile=/dev/null \
             ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'ENDSSH'
