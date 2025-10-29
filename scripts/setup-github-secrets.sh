@@ -78,42 +78,11 @@ echo -e "${BLUE}1. EC2 Configuration${NC}"
 set_secret "EC2_HOST" "54.180.29.96"
 set_secret "EC2_USER" "ec2_user"
 
-# SSH Key (multi-line)
-echo -n "Setting EC2_SSH_KEY... "
-cat << 'EOF' | gh secret set EC2_SSH_KEY -R "$REPO"
------BEGIN RSA PRIVATE KEY-----
-MIIEpAIBAAKCAQEA6jWZHXbEoeqgdEkvD/6QrBy9dYegSc27Wx3VBZ1bmfnwqiFw
-ft1K4h64qKsffMeIdY8/CsQ4x7xXf4SvVr76pZ9M27joNnH+t0AIH1wKlIMoZHEK
-DCJAgEQMWrw0TJYRkjlZVDrhOWJDtkuifqgkqKVqlYXIsocgWdFgacOG+rqM/rq1
-1GU6+2e65nohQz+aPnWDn2GtX1A0o+Sw5N8J5w78y/529aK6u5Rdt+XtoI+8ldtu
-Lg5i2nqMBusZ73Nz612O9y+xnKVegH9WoGHIzzUVz0o4MOMS4L5XFK7r3CRqVTo5
-UB0gDeSAXMvu/PEJap7nfANSplJk21rLs6xU4wIDAQABAoIBAGUMwwdHWwdRJ/GE
-Md4Aw4K+06+F2M5/CTsC4AoQHpmMkR2WV+ckq05sWtfLHUbFAEdYiqamiqkCxe2q
-3cvbkmErHgoe+XGkNXXzFo4RNC9nd2H+s4sQrCurMHllglsY1HP2cmg5Dzum/fgF
-IhLrkQWCeT4R/smoK3kVMTfwuKgsSaAknk5IVAWCoa6UjxFZAvGMOGt+H5XJ/+c7
-zkxMPOS5wRRWebBzfjDVUl9/x8TdzLjyGSdBoOXUNBF/Z7GMcFLNVULjzAojVdhs
-zcsDEFpv3xe1EsqOSCSgKtGvq94zqvD+IjC7AiN9ZTzKM/3XRx3TNRAMWwuIJtpK
-mgmewAECgYEA+E5omQ2U2sLEAeE6235tUBe4HlHF8Gq0smhA4cPvqKS+1VNUQDpN
-HB1Qy4il2LxP8aiXrw4sUqYH/Xk+y3u21EA9WDNu/Eo8oDz9/P/zs7tfPJWW/vUy
-jVk3K2TC44sneuhD4CQmxCwg9/r1KhwJFsFPfMFA9mWjELEfpC2fzOMCgYEA8Xdf
-DhVgIFvHnlsOHVYTsLlFZj9RG8QHjq34t9eBYsV1OLDD3xo96VNgejQC2X547Lns
-V5M8tOnDaBQIkfJ8eJBP6GUBk/yx+BBrPTx4aMFowbncjs+wNRtjimhNsFWgr8p1
-Utgv/IGw6XQPVDcH2BsvA9naxvEFNTc4CXav2AECgYEA9db7rH1L4YNv+MR8N5Dm
-vaOeQTaJGU0sdm7Nvjj18SybXC5Sffy7F5jWw40ZVoqrRAG9nC4WKAYGZylByMlF
-7MNleQwDWHpPp/57IaBwMoTS9/LLOsadNGEeRDJQ2mSNxBxuB18DmrpuMdcgIH79
-aLAf+M6FeO6MEhyrzSr2yi0CgYEAmPo3joScUePTo8+sMYnHD79Q6GZUzHJ1Fz/A
-wzgVEK5ohXH3pfDKKHhaNxGcfI5TriZcRV9Sposy8U0/4LbvhLJo7aKQTWFanv5H
-8pPM9RETfShzQ0bxK7QebCGIlp6pHrX1fnbYb/D6U+zjiUcUASW3s4jhwggQdJZ3
-OgengAECgYBAL6kNOU2UEdfw50YScsp+7H2tnlhhyrQmJAHdY37rFAUlxcoStDfr
-etteVHeY+cEtIKUWPiew7EpqGMIt/e2uzeL5GtBxHroqlIdKh78h79imMW8/r5XV
-QozPyKdRI8UW70PBZg4X5eMhLxW70da/ZxolqnhU/yt4t5Md7eRBQg==
------END RSA PRIVATE KEY-----
-EOF
-if [ $? -eq 0 ]; then
-    echo -e "${GREEN}✅${NC}"
-else
-    echo -e "${RED}❌ Failed${NC}"
-fi
+# SSH Key (multi-line) - REMOVED FOR SECURITY
+# DO NOT commit actual SSH keys to Git!
+# Instead, use: cat /path/to/your/key.pem | gh secret set EC2_SSH_KEY -R "$REPO"
+echo -e "${YELLOW}⚠️  SSH Key must be set manually with your actual key file${NC}"
+echo "Run: cat /path/to/your/ec2-key.pem | gh secret set EC2_SSH_KEY -R \"$REPO\""
 
 echo ""
 echo -e "${BLUE}2. AWS Configuration${NC}"
