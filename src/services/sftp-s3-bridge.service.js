@@ -1,39 +1,13 @@
 import { S3Client, GetObjectCommand, PutObjectCommand, DeleteObjectCommand, ListObjectsV2Command, HeadObjectCommand } from '@aws-sdk/client-s3';
 import { Readable } from 'stream';
 
-export type UserRole = 'admin' | 'downloader';
-
-export interface SftpUser {
-  username: string;
-  role: UserRole;
-}
-
-export interface FileAttributes {
-  size: number;
-  mode: number;
-  mtime: number;
-  atime: number;
-  uid: number;
-  gid: number;
-  isDirectory: boolean;
-}
-
-export interface DirectoryEntry {
-  filename: string;
-  longname: string;
-  attrs: FileAttributes;
-}
-
 /**
  * SFTP-S3 Bridge Service
  * Translates SFTP operations to S3 operations
  * Enforces role-based access control
  */
 export class SftpS3BridgeService {
-  private client: S3Client;
-  private bucketName: string;
-
-  constructor(region: string, accessKeyId: string, secretAccessKey: string, bucketName: string) {
+  constructor(region, accessKeyId, secretAccessKey, bucketName) {
     this.client = new S3Client({
       region,
       credentials: {
@@ -48,7 +22,7 @@ export class SftpS3BridgeService {
   /**
    * Check if user has permission for the operation
    */
-  private checkPermission(user: SftpUser, operation: 'read' | 'write' | 'delete'): boolean {
+  checkPermission(user, operation) {
     if (user.role === 'admin') {
       return true; // Admin can do everything
     }
@@ -61,7 +35,7 @@ export class SftpS3BridgeService {
   /**
    * Normalize S3 path (remove leading slash, ensure it's within firmwares/)
    */
-  private normalizeS3Path(path: string): string {
+  normalizeS3Path(path) {
     // Remove leading slash
     let normalized = path.startsWith('/') ? path.slice(1) : path;
     
@@ -81,7 +55,7 @@ export class SftpS3BridgeService {
   /**
    * Read file from S3
    */
-  async readFile(user: SftpUser, path: string): Promise<Buffer> {
+  async readFile(user, path) {
     console.log(`📖 SFTP-S3 Bridge: Read file requested by ${user.username} (${user.role}): ${path}`);
     
     if (!this.checkPermission(user, 'read')) {
@@ -105,8 +79,8 @@ export class SftpS3BridgeService {
       }
 
       // Convert stream to buffer
-      const chunks: Uint8Array[] = [];
-      const stream = response.Body as Readable;
+      const chunks = [];
+      const stream = response.Body;
       
       for await (const chunk of stream) {
         chunks.push(chunk);
@@ -124,7 +98,7 @@ export class SftpS3BridgeService {
   /**
    * Write file to S3
    */
-  async writeFile(user: SftpUser, path: string, data: Buffer): Promise<void> {
+  async writeFile(user, path, data) {
     console.log(`📝 SFTP-S3 Bridge: Write file requested by ${user.username} (${user.role}): ${path}`);
     
     if (!this.checkPermission(user, 'write')) {
@@ -154,7 +128,7 @@ export class SftpS3BridgeService {
   /**
    * Delete file from S3
    */
-  async deleteFile(user: SftpUser, path: string): Promise<void> {
+  async deleteFile(user, path) {
     console.log(`🗑️ SFTP-S3 Bridge: Delete file requested by ${user.username} (${user.role}): ${path}`);
     
     if (!this.checkPermission(user, 'delete')) {
@@ -182,7 +156,7 @@ export class SftpS3BridgeService {
   /**
    * Get file/directory attributes
    */
-  async getAttributes(user: SftpUser, path: string): Promise<FileAttributes> {
+  async getAttributes(user, path) {
     console.log(`📊 SFTP-S3 Bridge: Get attributes requested by ${user.username}: ${path}`);
     
     if (!this.checkPermission(user, 'read')) {
@@ -228,7 +202,7 @@ export class SftpS3BridgeService {
   /**
    * List directory contents
    */
-  async readdir(user: SftpUser, path: string): Promise<DirectoryEntry[]> {
+  async readdir(user, path) {
     console.log(`📁 SFTP-S3 Bridge: List directory requested by ${user.username}: ${path}`);
     
     if (!this.checkPermission(user, 'read')) {
@@ -248,7 +222,7 @@ export class SftpS3BridgeService {
       });
 
       const response = await this.client.send(command);
-      const entries: DirectoryEntry[] = [];
+      const entries = [];
 
       // Add subdirectories (CommonPrefixes)
       if (response.CommonPrefixes) {
@@ -304,7 +278,7 @@ export class SftpS3BridgeService {
   /**
    * Create directory attributes
    */
-  private createDirectoryAttributes(): FileAttributes {
+  createDirectoryAttributes() {
     return {
       size: 0,
       mode: 0o040755, // Directory
@@ -319,9 +293,9 @@ export class SftpS3BridgeService {
   /**
    * Determine content type from file extension
    */
-  private getContentType(path: string): string {
+  getContentType(path) {
     const ext = path.split('.').pop()?.toLowerCase();
-    const contentTypes: Record<string, string> = {
+    const contentTypes = {
       'bin': 'application/octet-stream',
       'pdf': 'application/pdf',
       'zip': 'application/zip',

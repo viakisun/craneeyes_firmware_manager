@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import ssh2 from 'ssh2';
-import { SftpS3BridgeService } from './src/services/sftp-s3-bridge.service.ts';
+import { SftpS3BridgeService } from './src/services/sftp-s3-bridge.service.js';
 import pg from 'pg';
 import bcrypt from 'bcrypt';
 import dotenv from 'dotenv';

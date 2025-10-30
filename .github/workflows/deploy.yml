@@ -52,6 +52,7 @@ jobs:
           tar -czf deployment.tar.gz \
             dist/ \
             home/ \
+            src/ \
             server.js \
             sftp-server.js \
             package.json \
