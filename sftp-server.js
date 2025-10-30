@@ -6,6 +6,7 @@ import pg from 'pg';
 import bcrypt from 'bcrypt';
 import dotenv from 'dotenv';
 import crypto from 'crypto';
+import { execSync } from 'child_process';
 
 dotenv.config();
 
@@ -45,22 +46,35 @@ function getHostKey() {
     return fs.readFileSync(HOST_KEY_PATH);
   }
   
-  console.log('🔑 SFTP Server: Generating new host key');
-  const { privateKey } = crypto.generateKeyPairSync('rsa', {
-    modulusLength: 2048,
-    publicKeyEncoding: {
-      type: 'spki',
-      format: 'pem'
-    },
-    privateKeyEncoding: {
-      type: 'pkcs8',
-      format: 'pem'
-    }
-  });
-  
-  fs.writeFileSync(HOST_KEY_PATH, privateKey);
-  console.log('✅ SFTP Server: Host key saved');
-  return privateKey;
+  console.log('🔑 SFTP Server: Generating new host key with ssh-keygen');
+  try {
+    // Generate OpenSSH format key using ssh-keygen
+    execSync(`ssh-keygen -t rsa -b 2048 -f ${HOST_KEY_PATH} -N "" -m PEM`, { 
+      stdio: 'pipe' 
+    });
+    console.log('✅ SFTP Server: Host key generated and saved');
+    return fs.readFileSync(HOST_KEY_PATH);
+  } catch (error) {
+    console.error('❌ SFTP Server: Failed to generate host key with ssh-keygen:', error.message);
+    console.log('⚠️  SFTP Server: Falling back to crypto.generateKeyPairSync');
+    
+    // Fallback to crypto if ssh-keygen is not available
+    const { privateKey } = crypto.generateKeyPairSync('rsa', {
+      modulusLength: 2048,
+      publicKeyEncoding: {
+        type: 'spki',
+        format: 'pem'
+      },
+      privateKeyEncoding: {
+        type: 'pkcs1',  // Changed from pkcs8 to pkcs1
+        format: 'pem'
+      }
+    });
+    
+    fs.writeFileSync(HOST_KEY_PATH, privateKey);
+    console.log('✅ SFTP Server: Host key saved (crypto fallback)');
+    return privateKey;
+  }
 }
 
 /**
