@@ -160,10 +160,23 @@ jobs:
             echo "📦 Installing dependencies..."
             npm install --production
             
-            # Update environment file (if needed)
-            if [ ! -f .env ]; then
-              echo "⚠️  .env file not found, creating from secrets..."
-              cat > .env << EOF
+            # Create/update environment file
+            echo "📝 Creating .env file from secrets..."
+            cat > .env << EOF
+          # Backend-only AWS credentials (NEVER expose to frontend)
+          AWS_REGION=${{ secrets.AWS_REGION }}
+          AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_BUCKET_NAME=${{ secrets.AWS_BUCKET_NAME }}
+          
+          # Backend-only DB credentials (NEVER expose to frontend)
+          DB_HOST=${{ secrets.DB_HOST }}
+          DB_PORT=${{ secrets.DB_PORT }}
+          DB_NAME=${{ secrets.DB_NAME }}
+          DB_USER=${{ secrets.DB_USER }}
+          DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+          
+          # Legacy vars (for backward compatibility with old code)
           VITE_AWS_REGION=${{ secrets.AWS_REGION }}
           VITE_AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}
           VITE_AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}
@@ -173,11 +186,13 @@ jobs:
           VITE_AWS_DB_NAME=${{ secrets.DB_NAME }}
           VITE_AWS_DB_USER=${{ secrets.DB_USER }}
           VITE_AWS_DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+          
+          # API & SFTP Configuration
           VITE_API_BASE_URL=https://firmware.craneeyes.com/api
           API_PORT=${{ secrets.API_PORT }}
           SFTP_PORT=${{ secrets.SFTP_PORT }}
           EOF
-            fi
+            echo "✅ .env file created"
             
             # Copy frontend files to Nginx directory
             echo "📋 Copying frontend files..."

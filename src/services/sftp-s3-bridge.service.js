@@ -40,14 +40,22 @@ export class SftpS3BridgeService {
     let normalized = path.startsWith('/') ? path.slice(1) : path;
     
     // If path is empty or root, default to firmwares/
-    if (!normalized || normalized === '/') {
+    if (!normalized || normalized === '/' || normalized === '') {
       normalized = 'firmwares/';
+      return normalized;
     }
     
-    // Ensure path is within firmwares/ directory
-    if (!normalized.startsWith('firmwares/')) {
-      normalized = 'firmwares/' + normalized;
+    // If already starts with 'firmwares/', don't add it again
+    if (normalized.startsWith('firmwares/') || normalized.startsWith('firmwares')) {
+      // Ensure trailing slash for directories if needed
+      if (!normalized.endsWith('/') && !normalized.includes('.')) {
+        normalized = normalized + '/';
+      }
+      return normalized.startsWith('firmwares/') ? normalized : 'firmwares/' + normalized.slice(9);
     }
+    
+    // Add firmwares/ prefix
+    normalized = 'firmwares/' + normalized;
     
     return normalized;
   }
