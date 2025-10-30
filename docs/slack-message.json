@@ -1,0 +1,229 @@
+{
+  "blocks": [
+    {
+      "type": "header",
+      "text": {
+        "type": "plain_text",
+        "text": "🚀 CraneEyes 펌웨어 관리 시스템",
+        "emoji": true
+      }
+    },
+    {
+      "type": "section",
+      "text": {
+        "type": "mrkdwn",
+        "text": "펌웨어 파일을 웹과 SFTP로 관리하는 통합 시스템입니다."
+      }
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "type": "section",
+      "text": {
+        "type": "mrkdwn",
+        "text": "*🌐 웹 접속*\n• 관리자: <http://firmware.craneeyes.com/admin|firmware.craneeyes.com/admin>\n• 공개: <http://firmware.craneeyes.com|firmware.craneeyes.com>"
+      }
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "type": "header",
+      "text": {
+        "type": "plain_text",
+        "text": "📊 시스템 구조",
+        "emoji": true
+      }
+    },
+    {
+      "type": "section",
+      "fields": [
+        {
+          "type": "mrkdwn",
+          "text": "*1️⃣ 모델 생성*\n크레인 장비 모델 등록"
+        },
+        {
+          "type": "mrkdwn",
+          "text": "*2️⃣ 펌웨어 업로드*\n해당 모델에 펌웨어 연결"
+        },
+        {
+          "type": "mrkdwn",
+          "text": "*3️⃣ SFTP 계정 생성*\n사용자별 접근 권한 설정"
+        },
+        {
+          "type": "mrkdwn",
+          "text": "*4️⃣ 모델 할당*\n계정별 접근 가능 모델 지정"
+        }
+      ]
+    },
+    {
+      "type": "section",
+      "text": {
+        "type": "mrkdwn",
+        "text": "```\n모델(Model) → 펌웨어(Firmware) → SFTP 계정(User) → 허용 모델(Allowed Models)\n  SS1406   →   v1.0.bin     →  crane_admin1  →  [SS1406, SS1416, ...]\n  SS1416   →   v2.0.bin     →  crane_dl1     →  [SS1406, SS1416]\n```"
+      }
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "type": "header",
+      "text": {
+        "type": "plain_text",
+        "text": "🔑 SFTP 계정 정보",
+        "emoji": true
+      }
+    },
+    {
+      "type": "section",
+      "text": {
+        "type": "mrkdwn",
+        "text": "*서버 정보*\n• 호스트: `sftp.craneeyes.com` 또는 `54.180.29.96`\n• 포트: `2222`\n• 프로토콜: SFTP"
+      }
+    },
+    {
+      "type": "section",
+      "text": {
+        "type": "mrkdwn",
+        "text": "*👨‍💼 관리자 계정 (읽기/쓰기/삭제)*"
+      }
+    },
+    {
+      "type": "section",
+      "fields": [
+        {
+          "type": "mrkdwn",
+          "text": "*crane_admin1*\n비밀번호: `admin001`\n허용: SS 시리즈 11개"
+        },
+        {
+          "type": "mrkdwn",
+          "text": "*crane_admin2*\n비밀번호: `admin002`\n허용: ST+SSN+SM 9개"
+        }
+      ]
+    },
+    {
+      "type": "section",
+      "text": {
+        "type": "mrkdwn",
+        "text": "*👥 다운로더 계정 (읽기 전용)*"
+      }
+    },
+    {
+      "type": "section",
+      "fields": [
+        {
+          "type": "mrkdwn",
+          "text": "*crane_dl1*\n비밀번호: `dl001`\n허용: SS1406, SS1416"
+        },
+        {
+          "type": "mrkdwn",
+          "text": "*crane_dl2*\n비밀번호: `dl002`\n허용: SS1926, SS2036Ace 등 4개"
+        },
+        {
+          "type": "mrkdwn",
+          "text": "*crane_dl3*\n비밀번호: `dl003`\n허용: SS2725LB, SS3506 등 4개"
+        },
+        {
+          "type": "mrkdwn",
+          "text": "*crane_dl4*\n비밀번호: `dl004`\n허용: SSN 시리즈 4개"
+        },
+        {
+          "type": "mrkdwn",
+          "text": "*crane_dl5*\n비밀번호: `dl005`\n허용: ST 시리즈 + SM7016"
+        }
+      ]
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "type": "header",
+      "text": {
+        "type": "plain_text",
+        "text": "💻 SFTP 접속 방법",
+        "emoji": true
+      }
+    },
+    {
+      "type": "section",
+      "text": {
+        "type": "mrkdwn",
+        "text": "*명령줄 접속*\n```sftp -P 2222 crane_admin1@sftp.craneeyes.com```"
+      }
+    },
+    {
+      "type": "section",
+      "text": {
+        "type": "mrkdwn",
+        "text": "*기본 명령어*\n• `ls` - 파일 목록\n• `cd [폴더]` - 이동\n• `get [파일]` - 다운로드\n• `put [파일]` - 업로드 (관리자만)\n• `rm [파일]` - 삭제 (관리자만)\n• `exit` - 종료"
+      }
+    },
+    {
+      "type": "section",
+      "text": {
+        "type": "mrkdwn",
+        "text": "*GUI 클라이언트*\n• FileZilla: <https://filezilla-project.org/|다운로드>\n• WinSCP (Windows): <https://winscp.net/|다운로드>\n• Cyberduck: <https://cyberduck.io/|다운로드>"
+      }
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "type": "header",
+      "text": {
+        "type": "plain_text",
+        "text": "📖 사용 예시",
+        "emoji": true
+      }
+    },
+    {
+      "type": "section",
+      "text": {
+        "type": "mrkdwn",
+        "text": "*1. 관리자: 펌웨어 업로드*\n```bash\n$ sftp -P 2222 crane_admin1@sftp.craneeyes.com\nsftp> cd SS1406\nsftp> put firmware_v1.2.bin\nsftp> exit\n```"
+      }
+    },
+    {
+      "type": "section",
+      "text": {
+        "type": "mrkdwn",
+        "text": "*2. 다운로더: 펌웨어 다운로드*\n```bash\n$ sftp -P 2222 crane_dl1@sftp.craneeyes.com\nsftp> ls\nSS1406    SS1416\nsftp> cd SS1406\nsftp> get firmware_v1.2.bin\nsftp> exit\n```"
+      }
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "type": "section",
+      "text": {
+        "type": "mrkdwn",
+        "text": "*⚠️ 주요 특징*\n• 각 사용자는 할당된 모델만 볼 수 있습니다\n• 다운로더는 읽기 전용 (업로드/삭제 불가)\n• 모든 접속은 로그에 기록됩니다\n• 웹 관리자 페이지에서 실시간 계정 관리 가능"
+      }
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "type": "section",
+      "text": {
+        "type": "mrkdwn",
+        "text": "*📚 상세 문서*\n• SFTP 가이드: `docs/SFTP_GUIDE.md`\n• API 문서: `docs/api/README.md`\n• 배포 가이드: `DEPLOY.md`"
+      }
+    },
+    {
+      "type": "context",
+      "elements": [
+        {
+          "type": "mrkdwn",
+          "text": "🔗 GitHub: <https://github.com/viakisun/craneeyes_firmware_manager|craneeyes_firmware_manager>"
+        },
+        {
+          "type": "mrkdwn",
+          "text": "📅 업데이트: 2025-10-30"
+        }
+      ]
+    }
+  ]
+}
+
