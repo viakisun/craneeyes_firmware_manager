@@ -3,9 +3,9 @@ import { FetchHttpHandler } from '@aws-sdk/fetch-http-handler';
 
 // Load environment variables
 const region = 'ap-northeast-2';
-const bucketName = 'dy-craneeyes-firmware';
-const accessKeyId = 'AKIASXKDVEWA4LUHWS5Y';
-const secretAccessKey = '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';
+const bucketName = process.env.AWS_BUCKET_NAME || 'dy-craneeyes-firmware';
+const accessKeyId = process.env.AWS_ACCESS_KEY_ID!;
+const secretAccessKey = process.env.AWS_SECRET_ACCESS_KEY!;
 
 // Initialize S3 client
 const s3Client = new S3Client({

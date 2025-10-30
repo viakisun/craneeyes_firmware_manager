@@ -1,16 +1,18 @@
 /// <reference types="vite/client" />
 
 interface ImportMetaEnv {
-  readonly VITE_AWS_REGION: string
-  readonly VITE_AWS_ACCESS_KEY_ID: string
-  readonly VITE_AWS_SECRET_ACCESS_KEY: string
-  readonly VITE_AWS_BUCKET_NAME: string
+  // Database configuration (for backward compatibility)
   readonly VITE_AWS_DB_HOST: string
   readonly VITE_AWS_DB_PORT: string
   readonly VITE_AWS_DB_NAME: string
   readonly VITE_AWS_DB_USER: string
   readonly VITE_AWS_DB_PASSWORD: string
+  
+  // Frontend-safe configuration
   readonly VITE_API_BASE_URL: string
+  
+  // Note: AWS S3 credentials are NEVER exposed to browser
+  // All S3 operations go through secure backend API
 }
 
 interface ImportMeta {
