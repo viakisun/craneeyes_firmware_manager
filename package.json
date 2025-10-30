@@ -15,7 +15,8 @@
     "complete-reset": "tsx scripts/complete-reset-rebuild.ts",
     "verify-system": "tsx scripts/verify-system.ts",
     "create-sftp-users": "node scripts/create-default-sftp-users.js",
-    "create-sftp-users-with-models": "node scripts/create-sftp-users-with-models.js"
+    "create-sftp-users-with-models": "node scripts/create-sftp-users-with-models.js",
+    "run-migration": "node scripts/run-migration.js"
   },
   "keywords": [
     "firmware",
