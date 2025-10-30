@@ -173,9 +173,9 @@ export default function AdminSftpUsers() {
           <div className="mb-8 p-4 border border-gray-300 bg-gray-50">
             <h2 className="font-bold text-black mb-2">SFTP Connection Info</h2>
             <div className="text-sm text-gray-700 space-y-1">
-              <p><span className="font-medium">Host:</span> firmware.craneeyes.com or 54.180.29.96</p>
+              <p><span className="font-medium">Host:</span> sftp.craneeyes.com or 54.180.29.96</p>
               <p><span className="font-medium">Port:</span> 2222</p>
-              <p><span className="font-medium">Connection:</span> sftp -P 2222 [username]@firmware.craneeyes.com</p>
+              <p><span className="font-medium">Connection:</span> sftp -P 2222 [username]@sftp.craneeyes.com</p>
             </div>
           </div>
 
