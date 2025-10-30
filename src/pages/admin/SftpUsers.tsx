@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
-import { UserPlus, Edit, Trash2, Power, Key, Shield, Download } from 'lucide-react';
 import { AdminSidebar } from '../../components/layout/AdminSidebar';
 import { Modal } from '../../components/ui/Modal';
 import { sftpUsersService } from '../../services/sftp-users.service';
 import { SftpUser } from '../../types';
+import { useData } from '../../context/DataContext';
 
 export default function AdminSftpUsers() {
   const [users, setUsers] = useState<SftpUser[]>([]);
@@ -14,8 +14,11 @@ export default function AdminSftpUsers() {
   const [formData, setFormData] = useState({
     username: '',
     password: '',
-    role: 'downloader' as 'admin' | 'downloader'
+    role: 'downloader' as 'admin' | 'downloader',
+    allowedModels: [] as string[]
   });
+
+  const { models } = useData();
 
   // Load SFTP users
   useEffect(() => {
@@ -34,7 +37,7 @@ export default function AdminSftpUsers() {
 
   const openCreateModal = () => {
     setModalMode('create');
-    setFormData({ username: '', password: '', role: 'downloader' });
+    setFormData({ username: '', password: '', role: 'downloader', allowedModels: [] });
     setSelectedUser(null);
     setShowModal(true);
   };
@@ -44,7 +47,8 @@ export default function AdminSftpUsers() {
     setFormData({ 
       username: user.username, 
       password: '', 
-      role: user.role 
+      role: user.role,
+      allowedModels: user.allowedModels || []
     });
     setSelectedUser(user);
     setShowModal(true);
@@ -65,10 +69,19 @@ export default function AdminSftpUsers() {
 
     try {
       if (modalMode === 'create') {
-        await sftpUsersService.create(formData.username, formData.password, formData.role);
+        await sftpUsersService.create(
+          formData.username, 
+          formData.password, 
+          formData.role,
+          formData.allowedModels
+        );
         alert('SFTP user created successfully!');
       } else if (selectedUser) {
-        const updateData: { password?: string; role?: 'admin' | 'downloader' } = {};
+        const updateData: { 
+          password?: string; 
+          role?: 'admin' | 'downloader'; 
+          allowedModels?: string[];
+        } = {};
         
         if (formData.password) {
           updateData.password = formData.password;
@@ -76,6 +89,10 @@ export default function AdminSftpUsers() {
         
         if (formData.role !== selectedUser.role) {
           updateData.role = formData.role;
+        }
+
+        if (JSON.stringify(formData.allowedModels) !== JSON.stringify(selectedUser.allowedModels)) {
+          updateData.allowedModels = formData.allowedModels;
         }
 
         if (Object.keys(updateData).length > 0) {
@@ -103,6 +120,7 @@ export default function AdminSftpUsers() {
 
     try {
       await sftpUsersService.toggle(userId);
+      alert(`User ${currentStatus ? 'disabled' : 'enabled'} successfully!`);
       loadUsers();
     } catch (error) {
       console.error('Failed to toggle user:', error);
@@ -111,180 +129,150 @@ export default function AdminSftpUsers() {
   };
 
   const handleDelete = async (userId: number, username: string) => {
-    if (!confirm(`Are you sure you want to delete user "${username}"?\n\nThis action cannot be undone.`)) {
+    if (!confirm(`Are you sure you want to delete user "${username}"? This action cannot be undone.`)) {
       return;
     }
 
     try {
       await sftpUsersService.delete(userId);
-      alert('SFTP user deleted successfully!');
+      alert('User deleted successfully!');
       loadUsers();
     } catch (error) {
       console.error('Failed to delete user:', error);
-      alert('Failed to delete user: ' + (error instanceof Error ? error.message : 'Unknown error'));
+      alert('Failed to delete user');
     }
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleString();
+  const handleModelSelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const selected = Array.from(e.target.selectedOptions).map(opt => opt.value);
+    setFormData({ ...formData, allowedModels: selected });
   };
 
   return (
-    <div className="flex min-h-screen bg-white">
+    <div className="min-h-screen bg-white flex">
       <AdminSidebar />
-      
-      <div className="flex-1 p-8">
-        <div className="max-w-6xl mx-auto">
-          <div className="flex justify-between items-center mb-8">
-            <div>
-              <h1 className="text-3xl font-bold tracking-tight mb-2">FTP 계정 관리</h1>
-              <p className="text-gray-600">SFTP 사용자 계정을 관리합니다</p>
+
+      <main className="flex-1 overflow-auto">
+        <div className="p-8">
+          <div className="mb-8">
+            <div className="flex justify-between items-center mb-4">
+              <div>
+                <h1 className="text-2xl font-bold text-black">SFTP Users</h1>
+                <p className="text-gray-600 mt-1">Manage SFTP user accounts and model access</p>
+              </div>
+              <button
+                onClick={openCreateModal}
+                className="px-4 py-2 bg-black text-white hover:bg-gray-800 transition-colors border border-black"
+              >
+                Add User
+              </button>
             </div>
-            <button
-              onClick={openCreateModal}
-              className="flex items-center space-x-2 px-4 py-2 bg-black text-white hover:bg-gray-800"
-            >
-              <UserPlus size={18} />
-              <span>새 계정 추가</span>
-            </button>
           </div>
 
-          {/* Info Box */}
-          <div className="mb-6 p-4 bg-blue-50 border border-blue-200 text-sm">
-            <div className="flex items-start space-x-2">
-              <Shield size={16} className="mt-0.5 text-blue-600" />
-              <div>
-                <p className="font-medium text-blue-900 mb-1">SFTP 접속 정보</p>
-                <p className="text-blue-800">
-                  호스트: <code className="bg-blue-100 px-1 py-0.5">your-server-ip</code> | 
-                  포트: <code className="bg-blue-100 px-1 py-0.5">2222</code>
-                </p>
-                <p className="text-blue-700 mt-2">
-                  접속 명령: <code className="bg-blue-100 px-2 py-0.5">sftp -P 2222 username@your-server-ip</code>
-                </p>
-              </div>
+          {/* Connection Info */}
+          <div className="mb-8 p-4 border border-gray-300 bg-gray-50">
+            <h2 className="font-bold text-black mb-2">SFTP Connection Info</h2>
+            <div className="text-sm text-gray-700 space-y-1">
+              <p><span className="font-medium">Host:</span> firmware.craneeyes.com or 54.180.29.96</p>
+              <p><span className="font-medium">Port:</span> 2222</p>
+              <p><span className="font-medium">Connection:</span> sftp -P 2222 [username]@firmware.craneeyes.com</p>
             </div>
           </div>
 
           {/* Users Table */}
-          <div className="border border-gray-200">
+          <div className="border border-gray-300">
             <table className="w-full">
-              <thead className="bg-gray-50 border-b border-gray-200">
+              <thead className="bg-black text-white">
                 <tr>
-                  <th className="text-left p-4 font-medium text-sm">사용자명</th>
-                  <th className="text-left p-4 font-medium text-sm">역할</th>
-                  <th className="text-left p-4 font-medium text-sm">상태</th>
-                  <th className="text-left p-4 font-medium text-sm">생성일</th>
-                  <th className="text-left p-4 font-medium text-sm">수정일</th>
-                  <th className="text-right p-4 font-medium text-sm">작업</th>
+                  <th className="px-4 py-3 text-left">Username</th>
+                  <th className="px-4 py-3 text-left">Role</th>
+                  <th className="px-4 py-3 text-left">Status</th>
+                  <th className="px-4 py-3 text-left">Allowed Models</th>
+                  <th className="px-4 py-3 text-left">Created</th>
+                  <th className="px-4 py-3 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {users.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} className="text-center p-8 text-gray-500">
-                      등록된 FTP 계정이 없습니다
+                {users.map((user, index) => (
+                  <tr 
+                    key={user.id}
+                    className={`border-b border-gray-200 hover:bg-gray-50 ${
+                      index % 2 === 0 ? 'bg-white' : 'bg-gray-50'
+                    }`}
+                  >
+                    <td className="px-4 py-3 font-medium text-black">{user.username}</td>
+                    <td className="px-4 py-3">
+                      <span className={`px-2 py-1 text-xs border ${
+                        user.role === 'admin' 
+                          ? 'bg-black text-white border-black' 
+                          : 'bg-white text-black border-gray-300'
+                      }`}>
+                        {user.role}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className={`px-2 py-1 text-xs border ${
+                        user.enabled 
+                          ? 'bg-white text-green-700 border-green-700' 
+                          : 'bg-white text-red-700 border-red-700'
+                      }`}>
+                        {user.enabled ? 'Enabled' : 'Disabled'}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-gray-600">
+                      {user.allowedModels && user.allowedModels.length > 0 
+                        ? `${user.allowedModels.length} models` 
+                        : 'All models'}
+                    </td>
+                    <td className="px-4 py-3 text-gray-600">
+                      {new Date(user.createdAt).toLocaleDateString()}
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      <div className="flex justify-end gap-2">
+                        <button
+                          onClick={() => openEditModal(user)}
+                          className="px-3 py-1 text-sm border border-gray-300 hover:bg-gray-100 transition-colors"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => handleToggle(user.id, user.username, user.enabled)}
+                          className="px-3 py-1 text-sm border border-gray-300 hover:bg-gray-100 transition-colors"
+                        >
+                          {user.enabled ? 'Disable' : 'Enable'}
+                        </button>
+                        <button
+                          onClick={() => handleDelete(user.id, user.username)}
+                          className="px-3 py-1 text-sm border border-red-600 text-red-600 hover:bg-red-50 transition-colors"
+                        >
+                          Delete
+                        </button>
+                      </div>
                     </td>
                   </tr>
-                ) : (
-                  users.map((user) => (
-                    <tr key={user.id} className="border-b border-gray-100 hover:bg-gray-50">
-                      <td className="p-4">
-                        <div className="flex items-center space-x-2">
-                          <span className="font-medium">{user.username}</span>
-                        </div>
-                      </td>
-                      <td className="p-4">
-                        <div className="flex items-center space-x-2">
-                          {user.role === 'admin' ? (
-                            <>
-                              <Shield size={16} className="text-red-500" />
-                              <span className="px-2 py-1 bg-red-50 text-red-700 text-xs font-medium">
-                                관리자
-                              </span>
-                            </>
-                          ) : (
-                            <>
-                              <Download size={16} className="text-blue-500" />
-                              <span className="px-2 py-1 bg-blue-50 text-blue-700 text-xs font-medium">
-                                다운로더
-                              </span>
-                            </>
-                          )}
-                        </div>
-                      </td>
-                      <td className="p-4">
-                        <span
-                          className={`px-2 py-1 text-xs font-medium ${
-                            user.enabled
-                              ? 'bg-green-50 text-green-700'
-                              : 'bg-gray-50 text-gray-700'
-                          }`}
-                        >
-                          {user.enabled ? '활성화' : '비활성화'}
-                        </span>
-                      </td>
-                      <td className="p-4 text-sm text-gray-600">
-                        {formatDate(user.createdAt)}
-                      </td>
-                      <td className="p-4 text-sm text-gray-600">
-                        {formatDate(user.updatedAt)}
-                      </td>
-                      <td className="p-4">
-                        <div className="flex items-center justify-end space-x-2">
-                          <button
-                            onClick={() => openEditModal(user)}
-                            className="p-2 hover:bg-gray-100"
-                            title="편집"
-                          >
-                            <Edit size={18} />
-                          </button>
-                          <button
-                            onClick={() => handleToggle(user.id, user.username, user.enabled)}
-                            className={`p-2 hover:bg-gray-100 ${
-                              user.enabled ? 'text-orange-600' : 'text-green-600'
-                            }`}
-                            title={user.enabled ? '비활성화' : '활성화'}
-                          >
-                            <Power size={18} />
-                          </button>
-                          <button
-                            onClick={() => handleDelete(user.id, user.username)}
-                            className="p-2 text-red-600 hover:bg-red-50"
-                            title="삭제"
-                          >
-                            <Trash2 size={18} />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))
-                )}
+                ))}
               </tbody>
             </table>
-          </div>
 
-          {/* Role Descriptions */}
-          <div className="mt-6 p-4 bg-gray-50 border border-gray-200 text-sm">
-            <h3 className="font-medium mb-2">역할 설명</h3>
-            <div className="space-y-1 text-gray-700">
-              <p><strong>관리자 (admin):</strong> 파일 업로드, 다운로드, 삭제 가능</p>
-              <p><strong>다운로더 (downloader):</strong> 파일 다운로드만 가능 (읽기 전용)</p>
-            </div>
+            {users.length === 0 && (
+              <div className="text-center py-12 text-gray-500">
+                No SFTP users found. Click "Add User" to create one.
+              </div>
+            )}
           </div>
         </div>
-      </div>
+      </main>
 
       {/* Create/Edit Modal */}
       <Modal
         isOpen={showModal}
-        onClose={() => setShowModal(false)}
-        title={modalMode === 'create' ? '새 FTP 계정 추가' : 'FTP 계정 수정'}
+        onClose={() => !isLoading && setShowModal(false)}
+        title={modalMode === 'create' ? 'Create SFTP User' : 'Edit SFTP User'}
       >
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium mb-1">
-              사용자명 {modalMode === 'create' && <span className="text-red-500">*</span>}
+            <label className="block text-sm font-medium text-black mb-1">
+              Username
             </label>
             <input
               type="text"
@@ -292,59 +280,74 @@ export default function AdminSftpUsers() {
               onChange={(e) => setFormData({ ...formData, username: e.target.value })}
               disabled={modalMode === 'edit'}
               className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-black disabled:bg-gray-100"
-              placeholder="sftpuser"
+              placeholder="Enter username"
             />
-            {modalMode === 'edit' && (
-              <p className="text-xs text-gray-500 mt-1">사용자명은 수정할 수 없습니다</p>
-            )}
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-1">
-              비밀번호 {modalMode === 'create' && <span className="text-red-500">*</span>}
+            <label className="block text-sm font-medium text-black mb-1">
+              Password {modalMode === 'edit' && '(leave empty to keep current)'}
             </label>
-            <div className="relative">
-              <Key size={18} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-              <input
-                type="password"
-                value={formData.password}
-                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                className="w-full pl-10 pr-3 py-2 border border-gray-300 focus:outline-none focus:border-black"
-                placeholder={modalMode === 'edit' ? '변경하려면 입력하세요' : '비밀번호'}
-              />
-            </div>
-            {modalMode === 'edit' && (
-              <p className="text-xs text-gray-500 mt-1">비워두면 비밀번호가 변경되지 않습니다</p>
-            )}
+            <input
+              type="password"
+              value={formData.password}
+              onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-black"
+              placeholder={modalMode === 'edit' ? 'Enter new password' : 'Enter password'}
+            />
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-1">
-              역할 <span className="text-red-500">*</span>
+            <label className="block text-sm font-medium text-black mb-1">
+              Role
             </label>
             <select
               value={formData.role}
               onChange={(e) => setFormData({ ...formData, role: e.target.value as 'admin' | 'downloader' })}
               className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-black"
             >
-              <option value="downloader">다운로더 (읽기 전용)</option>
-              <option value="admin">관리자 (읽기/쓰기)</option>
+              <option value="downloader">Downloader (Read-only)</option>
+              <option value="admin">Admin (Read/Write)</option>
             </select>
           </div>
 
-          <div className="flex space-x-2 pt-4">
+          <div>
+            <label className="block text-sm font-medium text-black mb-1">
+              Allowed Models (hold Ctrl/Cmd to select multiple)
+            </label>
+            <select
+              multiple
+              value={formData.allowedModels}
+              onChange={handleModelSelect}
+              className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-black min-h-[200px]"
+            >
+              {models.map((model) => (
+                <option key={model.id} value={model.name}>
+                  {model.name}
+                </option>
+              ))}
+            </select>
+            <p className="text-xs text-gray-600 mt-1">
+              {formData.allowedModels.length === 0 
+                ? 'No models selected = Access to all models' 
+                : `${formData.allowedModels.length} model(s) selected: ${formData.allowedModels.join(', ')}`}
+            </p>
+          </div>
+
+          <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
+            <button
+              onClick={() => setShowModal(false)}
+              disabled={isLoading}
+              className="px-4 py-2 border border-gray-300 hover:bg-gray-100 transition-colors disabled:opacity-50"
+            >
+              Cancel
+            </button>
             <button
               onClick={handleSubmit}
               disabled={isLoading}
-              className="flex-1 px-4 py-2 bg-black text-white hover:bg-gray-800 disabled:bg-gray-400"
+              className="px-4 py-2 bg-black text-white hover:bg-gray-800 transition-colors disabled:opacity-50"
             >
-              {isLoading ? '저장 중...' : modalMode === 'create' ? '생성' : '수정'}
-            </button>
-            <button
-              onClick={() => setShowModal(false)}
-              className="flex-1 px-4 py-2 border border-gray-300 hover:bg-gray-50"
-            >
-              취소
+              {isLoading ? 'Saving...' : (modalMode === 'create' ? 'Create User' : 'Update User')}
             </button>
           </div>
         </div>
@@ -352,4 +355,3 @@ export default function AdminSftpUsers() {
     </div>
   );
 }
-

@@ -194,6 +194,12 @@ jobs:
           EOF
             echo "✅ .env file created"
             
+            # Run database migrations
+            echo "💾 Running database migrations..."
+            export PGPASSWORD="${{ secrets.DB_PASSWORD }}"
+            psql -h ${{ secrets.DB_HOST }} -p ${{ secrets.DB_PORT }} -U ${{ secrets.DB_USER }} -d ${{ secrets.DB_NAME }} -f database/add-allowed-models.sql || echo "Migration may have already been applied"
+            echo "✅ Database migrations completed"
+            
             # Copy frontend files to Nginx directory
             echo "📋 Copying frontend files..."
             sudo mkdir -p /var/www/html/craneeyes

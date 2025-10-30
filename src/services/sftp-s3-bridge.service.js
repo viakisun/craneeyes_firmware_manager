@@ -33,6 +33,53 @@ export class SftpS3BridgeService {
   }
 
   /**
+   * Extract model name from path
+   * Examples: /firmwares/SS1406/file.bin -> SS1406, firmwares/SS1406/ -> SS1406
+   */
+  extractModelName(path) {
+    // Normalize path first
+    const normalized = this.normalizeS3Path(path);
+    
+    // Extract model name from path: firmwares/MODEL_NAME/...
+    const parts = normalized.split('/').filter(p => p);
+    
+    // parts[0] should be 'firmwares', parts[1] should be the model name
+    if (parts.length >= 2 && parts[0] === 'firmwares') {
+      return parts[1];
+    }
+    
+    return null;
+  }
+
+  /**
+   * Check if user has access to the specified model
+   */
+  checkModelAccess(user, path) {
+    const allowedModels = user.allowedModels || [];
+    
+    // Empty array means access to all models
+    if (allowedModels.length === 0) {
+      return true;
+    }
+    
+    const modelName = this.extractModelName(path);
+    
+    // If we can't extract a model name, deny access by default
+    if (!modelName) {
+      return false;
+    }
+    
+    // Check if the model is in the allowed list
+    const hasAccess = allowedModels.includes(modelName);
+    
+    if (!hasAccess) {
+      console.log(`⛔ SFTP-S3 Bridge: User ${user.username} denied access to model ${modelName}`);
+    }
+    
+    return hasAccess;
+  }
+
+  /**
    * Normalize S3 path (remove leading slash, ensure it's within firmwares/)
    */
   normalizeS3Path(path) {
@@ -69,6 +116,12 @@ export class SftpS3BridgeService {
     if (!this.checkPermission(user, 'read')) {
       console.error(`❌ SFTP-S3 Bridge: Permission denied for ${user.username}`);
       throw new Error('Permission denied');
+    }
+
+    // Check model access
+    if (!this.checkModelAccess(user, path)) {
+      console.error(`❌ SFTP-S3 Bridge: Model access denied for ${user.username}`);
+      throw new Error('Access denied to this model');
     }
 
     try {
@@ -114,6 +167,12 @@ export class SftpS3BridgeService {
       throw new Error('Permission denied');
     }
 
+    // Check model access
+    if (!this.checkModelAccess(user, path)) {
+      console.error(`❌ SFTP-S3 Bridge: Model access denied for ${user.username}`);
+      throw new Error('Access denied to this model');
+    }
+
     try {
       const s3Key = this.normalizeS3Path(path);
       console.log(`🔑 SFTP-S3 Bridge: S3 key: ${s3Key}, size: ${data.length} bytes`);
@@ -142,6 +201,12 @@ export class SftpS3BridgeService {
     if (!this.checkPermission(user, 'delete')) {
       console.error(`❌ SFTP-S3 Bridge: Permission denied for ${user.username}`);
       throw new Error('Permission denied');
+    }
+
+    // Check model access
+    if (!this.checkModelAccess(user, path)) {
+      console.error(`❌ SFTP-S3 Bridge: Model access denied for ${user.username}`);
+      throw new Error('Access denied to this model');
     }
 
     try {
@@ -231,6 +296,9 @@ export class SftpS3BridgeService {
 
       const response = await this.client.send(command);
       const entries = [];
+      
+      const allowedModels = user.allowedModels || [];
+      const isRootListing = prefix === 'firmwares/';
 
       // Add subdirectories (CommonPrefixes)
       if (response.CommonPrefixes) {
@@ -238,6 +306,14 @@ export class SftpS3BridgeService {
           if (commonPrefix.Prefix) {
             const dirName = commonPrefix.Prefix.slice(prefix.length).replace('/', '');
             if (dirName) {
+              // Filter model directories if we're at root level and user has restricted access
+              if (isRootListing && allowedModels.length > 0) {
+                if (!allowedModels.includes(dirName)) {
+                  console.log(`🚫 SFTP-S3 Bridge: Filtering out ${dirName} for user ${user.username}`);
+                  continue; // Skip this directory
+                }
+              }
+              
               entries.push({
                 filename: dirName,
                 longname: `drwxr-xr-x 1 user group 0 ${new Date().toISOString().split('T')[0]} ${dirName}`,

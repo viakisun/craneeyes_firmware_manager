@@ -21,13 +21,13 @@ class SftpUsersService {
   /**
    * Create new SFTP user
    */
-  async create(username: string, password: string, role: 'admin' | 'downloader'): Promise<SftpUser> {
+  async create(username: string, password: string, role: 'admin' | 'downloader', allowedModels: string[] = []): Promise<SftpUser> {
     const response = await fetch(`${API_BASE_URL}/sftp-users`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ username, password, role }),
+      body: JSON.stringify({ username, password, role, allowedModels }),
     });
 
     if (!response.ok) {
@@ -41,7 +41,7 @@ class SftpUsersService {
   /**
    * Update SFTP user
    */
-  async update(id: number, data: { password?: string; role?: 'admin' | 'downloader' }): Promise<SftpUser> {
+  async update(id: number, data: { password?: string; role?: 'admin' | 'downloader'; allowedModels?: string[] }): Promise<SftpUser> {
     const response = await fetch(`${API_BASE_URL}/sftp-users/${id}`, {
       method: 'PUT',
       headers: {

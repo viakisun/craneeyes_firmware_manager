@@ -266,7 +266,7 @@ app.post('/api/logs', async (req, res) => {
 app.get('/api/sftp-users', async (req, res) => {
   try {
     const query = `
-      SELECT id, username, role, enabled, created_at as "createdAt", updated_at as "updatedAt"
+      SELECT id, username, role, enabled, allowed_models as "allowedModels", created_at as "createdAt", updated_at as "updatedAt"
       FROM sftp_users 
       ORDER BY created_at DESC
     `;
@@ -280,7 +280,7 @@ app.get('/api/sftp-users', async (req, res) => {
 
 app.post('/api/sftp-users', async (req, res) => {
   try {
-    const { username, password, role } = req.body;
+    const { username, password, role, allowedModels } = req.body;
     
     // Validate input
     if (!username || !password || !role) {
@@ -291,17 +291,20 @@ app.post('/api/sftp-users', async (req, res) => {
       return res.status(400).json({ error: 'Role must be either "admin" or "downloader"' });
     }
     
+    // Validate allowedModels is an array if provided
+    const modelsArray = Array.isArray(allowedModels) ? allowedModels : [];
+    
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
     
     const query = `
-      INSERT INTO sftp_users (username, password, role, enabled)
-      VALUES ($1, $2, $3, true)
-      RETURNING id, username, role, enabled, created_at as "createdAt", updated_at as "updatedAt"
+      INSERT INTO sftp_users (username, password, role, enabled, allowed_models)
+      VALUES ($1, $2, $3, true, $4)
+      RETURNING id, username, role, enabled, allowed_models as "allowedModels", created_at as "createdAt", updated_at as "updatedAt"
     `;
-    const result = await pool.query(query, [username, hashedPassword, role]);
+    const result = await pool.query(query, [username, hashedPassword, role, modelsArray]);
     
-    console.log(`✅ Created SFTP user: ${username} (${role})`);
+    console.log(`✅ Created SFTP user: ${username} (${role}) with ${modelsArray.length} allowed models`);
     res.json(result.rows[0]);
   } catch (error) {
     console.error('Error creating SFTP user:', error);
@@ -316,7 +319,7 @@ app.post('/api/sftp-users', async (req, res) => {
 app.put('/api/sftp-users/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const { password, role } = req.body;
+    const { password, role, allowedModels } = req.body;
     
     const updates = [];
     const values = [];
@@ -336,6 +339,12 @@ app.put('/api/sftp-users/:id', async (req, res) => {
       values.push(role);
     }
     
+    if (allowedModels !== undefined) {
+      const modelsArray = Array.isArray(allowedModels) ? allowedModels : [];
+      updates.push(`allowed_models = $${paramIndex++}`);
+      values.push(modelsArray);
+    }
+    
     if (updates.length === 0) {
       return res.status(400).json({ error: 'No updates provided' });
     }
@@ -343,9 +352,9 @@ app.put('/api/sftp-users/:id', async (req, res) => {
     values.push(id);
     const query = `
       UPDATE sftp_users 
-      SET ${updates.join(', ')}
+      SET ${updates.join(', ')}, updated_at = NOW()
       WHERE id = $${paramIndex}
-      RETURNING id, username, role, enabled, created_at as "createdAt", updated_at as "updatedAt"
+      RETURNING id, username, role, enabled, allowed_models as "allowedModels", created_at as "createdAt", updated_at as "updatedAt"
     `;
     
     const result = await pool.query(query, values);
@@ -368,9 +377,9 @@ app.post('/api/sftp-users/:id/toggle', async (req, res) => {
     
     const query = `
       UPDATE sftp_users 
-      SET enabled = NOT enabled
+      SET enabled = NOT enabled, updated_at = NOW()
       WHERE id = $1
-      RETURNING id, username, role, enabled, created_at as "createdAt", updated_at as "updatedAt"
+      RETURNING id, username, role, enabled, allowed_models as "allowedModels", created_at as "createdAt", updated_at as "updatedAt"
     `;
     
     const result = await pool.query(query, [id]);

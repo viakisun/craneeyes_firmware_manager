@@ -85,7 +85,7 @@ async function authenticateUser(username, password) {
     console.log(`🔐 SFTP Server: Authentication attempt for user: ${username}`);
     
     const query = `
-      SELECT id, username, password, role, enabled 
+      SELECT id, username, password, role, enabled, allowed_models 
       FROM sftp_users 
       WHERE username = $1
     `;
@@ -111,10 +111,12 @@ async function authenticateUser(username, password) {
       return null;
     }
     
-    console.log(`✅ SFTP Server: Authentication successful for ${username} (${user.role})`);
+    const allowedModels = user.allowed_models || [];
+    console.log(`✅ SFTP Server: Authentication successful for ${username} (${user.role}) - ${allowedModels.length === 0 ? 'All models' : allowedModels.length + ' models'} allowed`);
     return {
       username: user.username,
-      role: user.role
+      role: user.role,
+      allowedModels: allowedModels
     };
   } catch (error) {
     console.error('❌ SFTP Server: Authentication error:', error);

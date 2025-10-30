@@ -33,6 +33,7 @@ export interface SftpUser {
   username: string;
   role: 'admin' | 'downloader';
   enabled: boolean;
+  allowedModels: string[];
   createdAt: string;
   updatedAt: string;
 }
