@@ -1,246 +1,256 @@
-import { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand, ListObjectsV2Command, DeleteObjectsCommand } from '@aws-sdk/client-s3';
-import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
-import { FetchHttpHandler } from '@aws-sdk/fetch-http-handler';
+/**
+ * S3 Service (Secure - using backend API proxy)
+ * All AWS credentials are kept server-side only
+ * Browser never has access to AWS keys
+ */
+
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 class S3Service {
-  private client: S3Client;
-  private bucketName: string;
-
   constructor() {
-    this.client = new S3Client({
-      region: import.meta.env.VITE_AWS_REGION as string,
-      credentials: {
-        accessKeyId: import.meta.env.VITE_AWS_ACCESS_KEY_ID as string,
-        secretAccessKey: import.meta.env.VITE_AWS_SECRET_ACCESS_KEY as string,
-      },
-      // 브라우저 환경을 명시적으로 설정하여 스트림 문제 방지
-      requestHandler: new FetchHttpHandler({
-        requestTimeout: 300000, // 5분 타임아웃
-      }) as any,
-      // 청크 업로드 완전 비활성화
-      maxAttempts: 1,
-      // @ts-ignore - 브라우저 환경 강제 설정
-      useDualstackEndpoint: false,
-      useAccelerateEndpoint: false,
-    });
-    this.bucketName = import.meta.env.VITE_AWS_BUCKET_NAME as string;
-    console.log('🔧 S3Service: Initialized with FetchHttpHandler for browser compatibility');
-    console.log('🔧 S3Service: Chunked upload and checksums disabled');
+    console.log('🔧 S3Service: Initialized with secure backend proxy');
   }
 
-  // Upload firmware file (supports .bin, .pdf, .zip, .txt files)
+  /**
+   * Upload firmware file to S3 via backend API
+   */
   async uploadFirmware(file: File, modelName: string, version: string): Promise<string> {
-    console.log('🚀 S3Service: Starting upload process');
+    console.log('🚀 S3Service: Starting upload via backend API');
     console.log('📁 S3Service: File details:', {
       name: file.name,
       size: file.size,
       type: file.type,
-      lastModified: file.lastModified
     });
     console.log('🏷️ S3Service: Upload params:', { modelName, version });
 
     try {
-      // PDF 파일도 허용하도록 확장
-      const allowedTypes = [
-        'application/octet-stream', // .bin files
-        'application/pdf',         // .pdf files
-        'application/zip',         // .zip files
-        'text/plain'               // .txt files
-      ];
-      
-      console.log('🔍 S3Service: Checking file type validation');
-      console.log('📋 S3Service: File type:', file.type);
-      console.log('📋 S3Service: File extension:', file.name.split('.').pop());
-      
-      if (!allowedTypes.includes(file.type) && !file.name.endsWith('.bin') && !file.name.endsWith('.pdf') && !file.name.endsWith('.zip') && !file.name.endsWith('.txt')) {
-        console.error('❌ S3Service: File type not allowed');
-        throw new Error('Only .bin, .pdf, .zip, and .txt files are allowed');
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('modelName', modelName);
+      formData.append('version', version);
+
+      const response = await fetch(`${API_BASE_URL}/s3/upload`, {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Upload failed');
       }
 
-      console.log('✅ S3Service: File type validation passed');
-
-      const key = `firmwares/${modelName.replace(/\s/g, '-')}/${version}/${file.name}`;
-      console.log('🔑 S3Service: Generated S3 key:', key);
-      console.log('🪣 S3Service: Target bucket:', this.bucketName);
-
-      // 파일을 Uint8Array로 변환하여 브라우저 환경 스트림 문제 해결
-      console.log('🔄 S3Service: Converting file to Uint8Array (bypass middleware)');
-      const arrayBuffer = await file.arrayBuffer();
-      const uint8Array = new Uint8Array(arrayBuffer);
-      console.log('📊 S3Service: Uint8Array size:', uint8Array.byteLength);
-      console.log('📊 S3Service: Content type:', file.type);
-
-      const command = new PutObjectCommand({
-        Bucket: this.bucketName,
-        Key: key,
-        Body: uint8Array,
-        ContentType: file.type || 'application/octet-stream',
-        ContentLength: uint8Array.byteLength,
-        // 체크섬 미들웨어를 완전히 우회
-        ChecksumAlgorithm: undefined as any,
-      });
-      
-      console.log('📤 S3Service: Sending upload command to S3 (without checksums)');
-      
-      // 미들웨어 스택을 우회하는 옵션 추가
-      const result = await this.client.send(command, {
-        // @ts-ignore - 체크섬 미들웨어 강제 비활성화
-        requestChecksumCalculation: 'WHEN_REQUIRED',
-        responseChecksumValidation: 'WHEN_REQUIRED',
-      });
-      console.log('✅ S3Service: Upload successful:', result);
-      
-      return key;
+      const result = await response.json();
+      console.log('✅ S3Service: Upload successful:', result.key);
+      return result.key;
     } catch (error) {
-      console.error('❌ S3Service: Upload failed:', error);
-      if (error instanceof Error) {
-        console.error('❌ S3Service: Error details:', {
-          name: error.name,
-          message: error.message,
-          stack: error.stack
-        });
-      }
+      console.error('❌ S3Service: Upload error:', error);
       throw error;
     }
   }
 
-  // Generate presigned download URL (expires in 1 hour)
+  /**
+   * Get presigned download URL for a file
+   */
   async getDownloadUrl(s3Key: string): Promise<string> {
-    console.log('🔗 S3Service: Generating download URL');
-    console.log('🔑 S3Service: S3 key:', s3Key);
-    console.log('🪣 S3Service: Bucket:', this.bucketName);
+    console.log('🔗 S3Service: Getting download URL for:', s3Key);
 
     try {
-      // Extract filename from S3 key
-      const originalFilename = s3Key.split('/').pop() || 'firmware.txt';
-      
-      // Use RFC 5987 encoding for UTF-8 filenames
-      const encodedFilename = encodeURIComponent(originalFilename);
-      const contentDisposition = `attachment; filename*=UTF-8''${encodedFilename}`;
-      
-      const command = new GetObjectCommand({
-        Bucket: this.bucketName,
-        Key: s3Key,
-        ResponseContentDisposition: contentDisposition,
-        ResponseContentType: 'application/octet-stream',
-      });
-      
-      console.log('📤 S3Service: Creating presigned URL with RFC 5987 encoding');
-      console.log('📁 S3Service: Original filename:', originalFilename);
-      console.log('📁 S3Service: Encoded filename:', encodedFilename);
-      
-      const url = await getSignedUrl(this.client, command, { expiresIn: 3600 });
-      console.log('✅ S3Service: Download URL generated successfully');
-      console.log('🔗 S3Service: URL length:', url.length);
+      const response = await fetch(`${API_BASE_URL}/s3/download-url?key=${encodeURIComponent(s3Key)}`);
 
-      return url;
-    } catch (error) {
-      console.error('❌ S3Service: Failed to generate download URL:', error);
-      if (error instanceof Error) {
-        console.error('❌ S3Service: Error details:', {
-          name: error.name,
-          message: error.message,
-          stack: error.stack
-        });
+      if (!response.ok) {
+        throw new Error('Failed to get download URL');
       }
+
+      const result = await response.json();
+      return result.url;
+    } catch (error) {
+      console.error('❌ S3Service: Download URL error:', error);
       throw error;
     }
   }
 
-
-  // Delete firmware file from S3
+  /**
+   * Delete firmware file from S3
+   */
   async deleteFirmware(s3Key: string): Promise<void> {
-    console.log('🗑️ S3Service: Starting delete process');
-    console.log('🔑 S3Service: S3 key:', s3Key);
-    console.log('🪣 S3Service: Bucket:', this.bucketName);
+    console.log('🗑️ S3Service: Deleting file:', s3Key);
 
     try {
-      const command = new DeleteObjectCommand({
-        Bucket: this.bucketName,
-        Key: s3Key,
+      const response = await fetch(`${API_BASE_URL}/s3/delete`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ key: s3Key }),
       });
 
-      console.log('📤 S3Service: Sending delete command to S3');
-      const result = await this.client.send(command);
-      console.log('✅ S3Service: Delete successful:', result);
-    } catch (error) {
-      console.error('❌ S3Service: Delete failed:', error);
-      if (error instanceof Error) {
-        console.error('❌ S3Service: Error details:', {
-          name: error.name,
-          message: error.message,
-          stack: error.stack
-        });
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Delete failed');
       }
+
+      console.log('✅ S3Service: Delete successful');
+    } catch (error) {
+      console.error('❌ S3Service: Delete error:', error);
       throw error;
     }
   }
 
-  // Delete all firmware files from S3
-  async deleteAllFirmwares(): Promise<void> {
-    console.log('🗑️ S3Service: Starting bulk delete of all firmwares');
-    console.log('🪣 S3Service: Bucket:', this.bucketName);
+  /**
+   * Delete all firmware files for a specific model and version
+   */
+  async deleteFirmwareVersion(modelName: string, version: string): Promise<void> {
+    console.log(`🗑️ S3Service: Deleting all files for ${modelName} v${version}`);
 
     try {
-      // List all objects in firmwares/ folder
-      console.log('📋 S3Service: Listing all firmware files...');
-      const listCommand = new ListObjectsV2Command({
-        Bucket: this.bucketName,
-        Prefix: 'firmwares/',
-      });
+      // First, list all files in this version directory
+      const prefix = `firmwares/${modelName}/${version}/`;
+      const listResponse = await fetch(`${API_BASE_URL}/s3/list?prefix=${encodeURIComponent(prefix)}`);
+      
+      if (!listResponse.ok) {
+        throw new Error('Failed to list files');
+      }
 
-      const listResult = await this.client.send(listCommand);
-      const objects = listResult.Contents || [];
-
-      if (objects.length === 0) {
-        console.log('✅ S3Service: No firmware files found to delete');
+      const { files } = await listResponse.json();
+      
+      if (files.length === 0) {
+        console.log('⚠️ S3Service: No files found to delete');
         return;
       }
 
-      console.log(`📊 S3Service: Found ${objects.length} files to delete`);
+      const keys = files.map((f: any) => f.key);
 
-      // Prepare delete objects
-      const deleteObjects = objects.map(obj => ({
-        Key: obj.Key!
-      }));
-
-      // Delete all objects in batch
-      console.log('🗑️ S3Service: Deleting all firmware files...');
-      const deleteCommand = new DeleteObjectsCommand({
-        Bucket: this.bucketName,
-        Delete: {
-          Objects: deleteObjects,
-          Quiet: false,
+      // Delete all files
+      const deleteResponse = await fetch(`${API_BASE_URL}/s3/delete-multiple`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
         },
+        body: JSON.stringify({ keys }),
       });
 
-      const deleteResult = await this.client.send(deleteCommand);
-      console.log('✅ S3Service: Bulk delete completed');
-      console.log('📊 S3Service: Deleted files:', deleteResult.Deleted?.length || 0);
-      
-      if (deleteResult.Errors && deleteResult.Errors.length > 0) {
-        console.warn('⚠️ S3Service: Some files failed to delete:', deleteResult.Errors);
+      if (!deleteResponse.ok) {
+        const errorData = await deleteResponse.json();
+        throw new Error(errorData.error || 'Bulk delete failed');
       }
+
+      console.log(`✅ S3Service: Deleted ${keys.length} files`);
     } catch (error) {
-      console.error('❌ S3Service: Bulk delete failed:', error);
-      if (error instanceof Error) {
-        console.error('❌ S3Service: Error details:', {
-          name: error.name,
-          message: error.message,
-          stack: error.stack
-        });
-      }
+      console.error('❌ S3Service: Bulk delete error:', error);
       throw error;
     }
   }
 
-  // Format file size for display
+  /**
+   * List files in S3 with optional prefix
+   */
+  async listFiles(prefix?: string): Promise<{ folders: any[]; files: any[] }> {
+    console.log('📋 S3Service: Listing files with prefix:', prefix || '(none)');
+
+    try {
+      const url = prefix 
+        ? `${API_BASE_URL}/s3/list?prefix=${encodeURIComponent(prefix)}`
+        : `${API_BASE_URL}/s3/list`;
+
+      const response = await fetch(url);
+
+      if (!response.ok) {
+        throw new Error('Failed to list files');
+      }
+
+      const result = await response.json();
+      console.log(`✅ S3Service: Found ${result.folders.length} folders, ${result.files.length} files`);
+      return result;
+    } catch (error) {
+      console.error('❌ S3Service: List error:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get file size and metadata
+   */
+  async getFileMetadata(s3Key: string): Promise<{ size: number; lastModified: Date }> {
+    console.log('📊 S3Service: Getting metadata for:', s3Key);
+
+    try {
+      // Use list API with specific prefix to get file metadata
+      const response = await fetch(`${API_BASE_URL}/s3/list?prefix=${encodeURIComponent(s3Key)}`);
+
+      if (!response.ok) {
+        throw new Error('Failed to get file metadata');
+      }
+
+      const { files } = await response.json();
+      const file = files.find((f: any) => f.key === s3Key);
+
+      if (!file) {
+        throw new Error('File not found');
+      }
+
+      return {
+        size: file.size,
+        lastModified: new Date(file.lastModified),
+      };
+    } catch (error) {
+      console.error('❌ S3Service: Metadata error:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Delete all firmwares from S3 (DANGEROUS - use with caution)
+   */
+  async deleteAllFirmwares(): Promise<void> {
+    console.log('⚠️ S3Service: Deleting ALL firmwares');
+
+    try {
+      // List all files in firmwares/
+      const response = await fetch(`${API_BASE_URL}/s3/list?prefix=firmwares/`);
+      
+      if (!response.ok) {
+        throw new Error('Failed to list files');
+      }
+
+      const { files } = await response.json();
+      
+      if (files.length === 0) {
+        console.log('✅ S3Service: No files to delete');
+        return;
+      }
+
+      const keys = files.map((f: any) => f.key);
+
+      // Delete all files
+      const deleteResponse = await fetch(`${API_BASE_URL}/s3/delete-multiple`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ keys }),
+      });
+
+      if (!deleteResponse.ok) {
+        const errorData = await deleteResponse.json();
+        throw new Error(errorData.error || 'Bulk delete failed');
+      }
+
+      console.log(`✅ S3Service: Deleted all ${keys.length} firmware files`);
+    } catch (error) {
+      console.error('❌ S3Service: Delete all error:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Format file size for display
+   */
   formatFileSize(bytes: number): string {
-    if (bytes === 0) return '0 Bytes';
+    if (bytes === 0) return '0 B';
     const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const sizes = ['B', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    return `${(bytes / Math.pow(k, i)).toFixed(2)} ${sizes[i]}`;
   }
 }
 

@@ -3,11 +3,32 @@ import cors from 'cors';
 import { Pool } from 'pg';
 import dotenv from 'dotenv';
 import bcrypt from 'bcrypt';
+import { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand, ListObjectsV2Command, DeleteObjectsCommand } from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import multer from 'multer';
 
 dotenv.config();
 
 const app = express();
 const port = process.env.API_PORT || 3001;
+
+// S3 Client initialization (server-side only, keys never exposed to browser)
+const s3Client = new S3Client({
+  region: process.env.AWS_REGION,
+  credentials: {
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+  },
+});
+const AWS_BUCKET_NAME = process.env.AWS_BUCKET_NAME;
+
+// Multer configuration for file uploads (memory storage)
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 100 * 1024 * 1024, // 100MB limit
+  },
+});
 
 // Middleware
 app.use(cors());
@@ -15,11 +36,11 @@ app.use(express.json());
 
 // PostgreSQL connection
 const pool = new Pool({
-  host: process.env.VITE_AWS_DB_HOST,
-  port: parseInt(process.env.VITE_AWS_DB_PORT || '5432'),
-  database: process.env.VITE_AWS_DB_NAME,
-  user: process.env.VITE_AWS_DB_USER,
-  password: process.env.VITE_AWS_DB_PASSWORD,
+  host: process.env.DB_HOST || process.env.VITE_AWS_DB_HOST, // Fallback for backward compatibility
+  port: parseInt(process.env.DB_PORT || process.env.VITE_AWS_DB_PORT || '5432'),
+  database: process.env.DB_NAME || process.env.VITE_AWS_DB_NAME,
+  user: process.env.DB_USER || process.env.VITE_AWS_DB_USER,
+  password: process.env.DB_PASSWORD || process.env.VITE_AWS_DB_PASSWORD,
   ssl: {
     rejectUnauthorized: false
   }
@@ -389,6 +410,170 @@ app.delete('/api/sftp-users/:id', async (req, res) => {
   } catch (error) {
     console.error('Error deleting SFTP user:', error);
     res.status(500).json({ error: 'Failed to delete SFTP user' });
+  }
+});
+
+// ============================================
+// S3 Proxy Endpoints (Secure - keys on server only)
+// ============================================
+
+// Upload firmware file to S3
+app.post('/api/s3/upload', upload.single('file'), async (req, res) => {
+  try {
+    const { modelName, version } = req.body;
+    const file = req.file;
+
+    if (!file) {
+      return res.status(400).json({ error: 'No file provided' });
+    }
+
+    if (!modelName || !version) {
+      return res.status(400).json({ error: 'Model name and version are required' });
+    }
+
+    // Validate file type
+    const allowedTypes = ['application/octet-stream', 'application/pdf', 'application/zip', 'text/plain'];
+    if (!allowedTypes.includes(file.mimetype)) {
+      return res.status(400).json({ error: 'Invalid file type. Allowed: .bin, .pdf, .zip, .txt' });
+    }
+
+    const s3Key = `firmwares/${modelName}/${version}/${file.originalname}`;
+
+    console.log(`📤 Uploading to S3: ${s3Key} (${file.size} bytes)`);
+
+    const command = new PutObjectCommand({
+      Bucket: AWS_BUCKET_NAME,
+      Key: s3Key,
+      Body: file.buffer,
+      ContentType: file.mimetype,
+    });
+
+    await s3Client.send(command);
+
+    console.log(`✅ Upload successful: ${s3Key}`);
+    res.json({ 
+      success: true, 
+      key: s3Key,
+      url: `https://${AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${s3Key}`
+    });
+  } catch (error) {
+    console.error('❌ S3 upload error:', error);
+    res.status(500).json({ error: 'Failed to upload file to S3' });
+  }
+});
+
+// Get presigned download URL for a file
+app.get('/api/s3/download-url', async (req, res) => {
+  try {
+    const { key } = req.query;
+
+    if (!key) {
+      return res.status(400).json({ error: 'S3 key is required' });
+    }
+
+    console.log(`🔗 Generating presigned URL for: ${key}`);
+
+    const command = new GetObjectCommand({
+      Bucket: AWS_BUCKET_NAME,
+      Key: key,
+    });
+
+    const url = await getSignedUrl(s3Client, command, { expiresIn: 3600 }); // 1 hour
+
+    res.json({ url });
+  } catch (error) {
+    console.error('❌ S3 presigned URL error:', error);
+    res.status(500).json({ error: 'Failed to generate download URL' });
+  }
+});
+
+// Delete file from S3
+app.delete('/api/s3/delete', async (req, res) => {
+  try {
+    const { key } = req.body;
+
+    if (!key) {
+      return res.status(400).json({ error: 'S3 key is required' });
+    }
+
+    console.log(`🗑️ Deleting from S3: ${key}`);
+
+    const command = new DeleteObjectCommand({
+      Bucket: AWS_BUCKET_NAME,
+      Key: key,
+    });
+
+    await s3Client.send(command);
+
+    console.log(`✅ Delete successful: ${key}`);
+    res.json({ success: true, message: 'File deleted successfully' });
+  } catch (error) {
+    console.error('❌ S3 delete error:', error);
+    res.status(500).json({ error: 'Failed to delete file from S3' });
+  }
+});
+
+// List files in S3 (with optional prefix)
+app.get('/api/s3/list', async (req, res) => {
+  try {
+    const { prefix } = req.query;
+
+    console.log(`📋 Listing S3 objects with prefix: ${prefix || '(none)'}`);
+
+    const command = new ListObjectsV2Command({
+      Bucket: AWS_BUCKET_NAME,
+      Prefix: prefix || 'firmwares/',
+      Delimiter: '/',
+    });
+
+    const response = await s3Client.send(command);
+
+    const folders = (response.CommonPrefixes || []).map(p => ({
+      name: p.Prefix.split('/').slice(-2, -1)[0],
+      prefix: p.Prefix,
+      type: 'folder'
+    }));
+
+    const files = (response.Contents || []).map(obj => ({
+      key: obj.Key,
+      name: obj.Key.split('/').pop(),
+      size: obj.Size,
+      lastModified: obj.LastModified,
+      type: 'file'
+    }));
+
+    res.json({ folders, files });
+  } catch (error) {
+    console.error('❌ S3 list error:', error);
+    res.status(500).json({ error: 'Failed to list S3 objects' });
+  }
+});
+
+// Delete multiple files from S3
+app.post('/api/s3/delete-multiple', async (req, res) => {
+  try {
+    const { keys } = req.body;
+
+    if (!keys || !Array.isArray(keys) || keys.length === 0) {
+      return res.status(400).json({ error: 'Array of S3 keys is required' });
+    }
+
+    console.log(`🗑️ Deleting multiple files from S3: ${keys.length} files`);
+
+    const command = new DeleteObjectsCommand({
+      Bucket: AWS_BUCKET_NAME,
+      Delete: {
+        Objects: keys.map(key => ({ Key: key })),
+      },
+    });
+
+    await s3Client.send(command);
+
+    console.log(`✅ Bulk delete successful: ${keys.length} files`);
+    res.json({ success: true, deletedCount: keys.length });
+  } catch (error) {
+    console.error('❌ S3 bulk delete error:', error);
+    res.status(500).json({ error: 'Failed to delete files from S3' });
   }
 });
 

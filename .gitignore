@@ -64,6 +64,7 @@ Thumbs.db
 
 # SFTP
 sftp-host-key
+sftp-host-key.pub
 
 # Package manager lock files (optional - uncomment if you want to ignore them)
 # package-lock.json

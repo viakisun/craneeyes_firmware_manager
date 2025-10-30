@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import { Server as SshServer } from 'ssh2';
+import ssh2 from 'ssh2';
 import { SftpS3BridgeService } from './src/services/sftp-s3-bridge.service.ts';
 import pg from 'pg';
 import bcrypt from 'bcrypt';
@@ -9,6 +9,7 @@ import crypto from 'crypto';
 
 dotenv.config();
 
+const { Server: SshServer } = ssh2;
 const { Pool } = pg;
 
 // Configuration
@@ -17,22 +18,22 @@ const HOST_KEY_PATH = process.env.SFTP_HOST_KEY || './sftp-host-key';
 
 // PostgreSQL connection for user authentication
 const pool = new Pool({
-  host: process.env.VITE_AWS_DB_HOST,
-  port: parseInt(process.env.VITE_AWS_DB_PORT || '5432'),
-  database: process.env.VITE_AWS_DB_NAME,
-  user: process.env.VITE_AWS_DB_USER,
-  password: process.env.VITE_AWS_DB_PASSWORD,
+  host: process.env.DB_HOST || process.env.VITE_AWS_DB_HOST,
+  port: parseInt(process.env.DB_PORT || process.env.VITE_AWS_DB_PORT || '5432'),
+  database: process.env.DB_NAME || process.env.VITE_AWS_DB_NAME,
+  user: process.env.DB_USER || process.env.VITE_AWS_DB_USER,
+  password: process.env.DB_PASSWORD || process.env.VITE_AWS_DB_PASSWORD,
   ssl: {
     rejectUnauthorized: false
   }
 });
 
-// Initialize S3 Bridge
+// Initialize S3 Bridge (using backend-only env vars)
 const s3Bridge = new SftpS3BridgeService(
-  process.env.VITE_AWS_REGION,
-  process.env.VITE_AWS_ACCESS_KEY_ID,
-  process.env.VITE_AWS_SECRET_ACCESS_KEY,
-  process.env.VITE_AWS_BUCKET_NAME
+  process.env.AWS_REGION,
+  process.env.AWS_ACCESS_KEY_ID,
+  process.env.AWS_SECRET_ACCESS_KEY,
+  process.env.AWS_BUCKET_NAME
 );
 
 /**
@@ -344,8 +345,8 @@ function startServer() {
         const user = await authenticateUser(ctx.username, ctx.password);
         
         if (user) {
+          client.user = user; // Set user BEFORE accepting
           ctx.accept();
-          client.user = user;
         } else {
           ctx.reject();
         }
