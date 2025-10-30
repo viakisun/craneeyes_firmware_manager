@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CraneEyes 펌웨어 SFTP 사용자 가이드 - VIASOFT.AI</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Malgun Gothic', '맑은 고딕', sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #fff;
+            padding: 40px 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            border-bottom: 2px solid #000;
+            padding-bottom: 30px;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            font-size: 14px;
+            font-weight: normal;
+            color: #666;
+            margin-bottom: 10px;
+        }
+
+        .header h2 {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+
+        .revision {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 40px;
+        }
+
+        .brand {
+            font-size: 16px;
+            font-weight: bold;
+            color: #000;
+            margin-top: 40px;
+        }
+
+        h2 {
+            font-size: 22px;
+            font-weight: bold;
+            margin-top: 50px;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        h3 {
+            font-size: 18px;
+            font-weight: bold;
+            margin-top: 30px;
+            margin-bottom: 15px;
+        }
+
+        h4 {
+            font-size: 16px;
+            font-weight: bold;
+            margin-top: 20px;
+            margin-bottom: 10px;
+        }
+
+        p {
+            margin-bottom: 15px;
+        }
+
+        ul, ol {
+            margin-left: 30px;
+            margin-bottom: 20px;
+        }
+
+        li {
+            margin-bottom: 8px;
+        }
+
+        code {
+            background: #f5f5f5;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+        }
+
+        pre {
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            margin-bottom: 20px;
+            border: 1px solid #ddd;
+        }
+
+        pre code {
+            background: none;
+            padding: 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+
+        th, td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+
+        th {
+            background: #000;
+            color: #fff;
+            font-weight: bold;
+        }
+
+        tr:nth-child(even) {
+            background: #f9f9f9;
+        }
+
+        .note {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+
+        .note strong {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .warning {
+            background: #f8d7da;
+            border-left: 4px solid #dc3545;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+
+        .info-box {
+            background: #f8f9fa;
+            border: 1px solid #ddd;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+        }
+
+        .footer {
+            margin-top: 60px;
+            padding-top: 20px;
+            border-top: 1px solid #ddd;
+            text-align: center;
+            color: #666;
+            font-size: 14px;
+        }
+
+        a {
+            color: #0066cc;
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        hr {
+            border: none;
+            border-top: 1px solid #ddd;
+            margin: 40px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>CRANE EYES 시스템 기획서</h1>
+            <h2>CraneEyes 펌웨어 SFTP 사용자 가이드</h2>
+            <div class="revision">
+                <strong>revision 1</strong><br>
+                2025.10.30.
+            </div>
+            <div class="brand">VIASOFT.AI</div>
+        </div>
+
+        <p style="font-size: 16px; margin-bottom: 30px;">
+            이 가이드는 CraneEyes 펌웨어 서버에 접속하여 파일을 관리하는 방법을 안내합니다.
+            SFTP를 처음 사용하셔도 쉽게 따라 하실 수 있습니다.
+        </p>
+
+        <h2>1. 시작하기 전에: 준비물</h2>
+        <p>SFTP 서버에 접속하려면 두 가지가 필요합니다.</p>
+        <ol>
+            <li><strong>SFTP 계정 정보</strong>: 관리자로부터 전달받은 사용자 ID와 비밀번호</li>
+            <li><strong>FileZilla 프로그램</strong>: SFTP 접속을 도와주는 무료 프로그램입니다.
+                <ul>
+                    <li>FileZilla 공식 사이트에서 다운로드 (무료): <a href="https://filezilla-project.org/" target="_blank">https://filezilla-project.org/</a></li>
+                </ul>
+            </li>
+        </ol>
+
+        <h2>2. FileZilla로 서버 접속하기 (권장)</h2>
+        <p>가장 쉽고 편리한 방법입니다.</p>
+
+        <h3>단계별 접속 방법</h3>
+        <ol>
+            <li>다운로드한 <strong>FileZilla</strong>를 실행합니다.</li>
+
+            <li>왼쪽 상단의 <strong>[파일] &gt; [사이트 관리자]</strong> 메뉴를 선택합니다.<br>
+                <em>(빠른 연결(Quickconnect)보다 사이트 관리자에 저장해두고 쓰는 것이 훨씬 편리합니다.)</em></li>
+
+            <li><strong>[사이트 관리자]</strong> 창이 뜨면 <strong>[새 사이트]</strong> 버튼을 눌러 'CraneEyes SFTP' 같이 알기 쉬운 이름을 적습니다.</li>
+
+            <li>오른쪽 <strong>[일반]</strong> 탭에 다음과 같이 서버 정보를 입력합니다.
+                <div class="info-box">
+                    <ul style="list-style: none; margin-left: 0;">
+                        <li><strong>프로토콜</strong>: <code>SFTP - SSH File Transfer Protocol</code> <em>(중요!)</em></li>
+                        <li><strong>호스트</strong>: <code>sftp.craneeyes.com</code></li>
+                        <li><strong>포트</strong>: <code>2222</code> <em>(필수!)</em></li>
+                        <li><strong>로그온 유형</strong>: <code>일반</code></li>
+                        <li><strong>사용자</strong>: 전달받은 ID (예: <code>crane_dl1</code>)</li>
+                        <li><strong>비밀번호</strong>: 전달받은 비밀번호 (예: <code>dl001</code>)</li>
+                    </ul>
+                </div>
+            </li>
+
+            <li><strong>[연결]</strong> 버튼을 누릅니다.</li>
+
+            <li><em>(선택)</em> 처음 접속 시 '알 수 없는 호스트 키' 경고가 뜰 수 있습니다. "이 호스트를 항상 신뢰함"에 체크하고 <strong>[확인]</strong>을 누릅니다.</li>
+
+            <li>접속에 성공하면 FileZilla 화면이 좌우로 나뉩니다.
+                <ul>
+                    <li><strong>왼쪽(로컬 사이트)</strong>: 내 컴퓨터의 파일</li>
+                    <li><strong>오른쪽(리모트 사이트)</strong>: 서버의 파일 (펌웨어)</li>
+                </ul>
+            </li>
+        </ol>
+
+        <h2>3. 파일 다운로드 및 업로드 (FileZilla)</h2>
+
+        <h3>펌웨어 다운로드 (가장 일반적인 작업)</h3>
+        <ol>
+            <li>오른쪽 서버('리모트 사이트') 목록에서 원하는 모델 폴더 (예: <code>SS1406</code>)로 들어갑니다.</li>
+
+            <li>다운로드할 펌웨어 파일 (예: <code>firmware_v1.0.bin</code>)을 마우스로 끌어 왼쪽 '내 컴퓨터' 영역으로 옮기면(Drag & Drop) 다운로드가 시작됩니다.
+                <ul>
+                    <li>또는, 파일에서 <strong>마우스 오른쪽 클릭</strong> 후 <strong>[다운로드]</strong>를 선택해도 됩니다.</li>
+                </ul>
+            </li>
+        </ol>
+
+        <h3>펌웨어 업로드 (관리자 계정만 가능)</h3>
+        <div class="warning">
+            <strong>[주의]</strong> <code>crane_dl</code>로 시작하는 '다운로더 계정'은 업로드가 불가능합니다.
+        </div>
+
+        <ol>
+            <li>왼쪽 '내 컴퓨터' 영역에서 업로드할 펌웨어 파일을 찾습니다.</li>
+            <li>파일을 마우스로 끌어 오른쪽 '서버' 영역으로 옮기면 업로드가 시작됩니다.</li>
+        </ol>
+
+        <h2>4. 내 계정 정보 및 권한</h2>
+        <p>서버에 접속하면 본인 계정에 허용된 모델 폴더만 보이게 됩니다.</p>
+
+        <h3>계정 유형</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>계정 유형</th>
+                    <th>ID 예시</th>
+                    <th>주요 권한</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>관리자 계정</strong></td>
+                    <td><code>crane_admin1</code></td>
+                    <td>펌웨어 읽기, 쓰기, 삭제 가능 (업로드 가능)</td>
+                </tr>
+                <tr>
+                    <td><strong>다운로더 계정</strong></td>
+                    <td><code>crane_dl1</code></td>
+                    <td>펌웨어 읽기 전용 (다운로드만 가능)</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="note">
+            <strong>Q. SS1406 폴더가 보이지 않아요!</strong><br>
+            <strong>A.</strong> 접속한 계정이 SS1406 모델에 접근할 권한이 없기 때문입니다. 웹 관리자 페이지 또는 담당자에게 문의하여 권한을 확인하세요.
+        </div>
+
+        <h2>5. 자주 묻는 질문 (문제 해결)</h2>
+
+        <h3>Q. "Connection refused" 오류가 발생하며 연결이 안 됩니다.</h3>
+        <p><strong>해결 1</strong>: FileZilla <strong>[사이트 관리자]</strong>에서 <strong>포트가 2222</strong>로 정확히 입력되었는지 확인하세요. (일반 FTP 포트인 21 또는 22가 아닙니다.)</p>
+        <p><strong>해결 2</strong>: <code>sftp.craneeyes.com</code> 대신 IP 주소인 <code>54.180.29.96</code>을 <strong>[호스트]</strong>란에 직접 입력해 보세요.</p>
+        <p><strong>해결 3</strong>: 회사 방화벽이 2222 포트를 차단했을 수 있습니다. 네트워크 관리자에게 문의하세요.</p>
+
+        <h3>Q. "Permission denied" (권한 거부) 오류가 발생하며 로그인이 안 됩니다.</h3>
+        <p><strong>해결</strong>: 사용자 ID와 비밀번호(대소문자 구분)가 정확한지 다시 확인하세요.</p>
+
+        <h3>Q. 파일을 업로드하거나 삭제하려는데 "Permission denied" 오류가 발생합니다.</h3>
+        <p><strong>해결</strong>: <code>crane_dl</code>로 시작하는 '다운로더 계정'일 가능성이 높습니다. 다운로더 계정은 읽기 전용이며 파일 수정/업로드가 불가능합니다. 업로드가 필요하면 관리자 계정을 이용하세요.</p>
+
+        <h3>Q. 접속했는데 아무 폴더도 보이지 않거나, 일부 모델만 보입니다.</h3>
+        <p><strong>정상입니다.</strong> 각 계정은 사전에 허용된 모델 폴더만 볼 수 있도록 설정되어 있습니다. 필요한 모델이 보이지 않으면 관리자에게 권한을 요청하세요.</p>
+
+        <h3>Q. Windows에서 sftp 명령어를 사용할 수 없다고 나옵니다.</h3>
+        <p><strong>해결</strong>: 이 가이드의 2번 항목을 참고하여 FileZilla를 설치하는 것이 가장 쉽습니다. (명령어 사용은 아래 '고급 사용자' 가이드를 참고하세요.)</p>
+
+        <h2>6. 고급 사용자를 위한 명령줄(CLI) 접속</h2>
+        <p>FileZilla 대신 터미널(명령줄) 환경을 선호하는 경우, 다음 명령어로 접속할 수 있습니다.</p>
+
+        <h3>macOS / Linux / Windows (PowerShell 또는 Git Bash)</h3>
+        <pre><code># -P (대문자) 옵션으로 포트 2222를 지정해야 합니다.
+sftp -P 2222 [사용자ID]@[호스트]
+
+# 예시: crane_admin1로 접속
+sftp -P 2222 crane_admin1@sftp.craneeyes.com</code></pre>
+
+        <h3>접속 후 SFTP 명령어 예시</h3>
+        <pre><code># 현재 서버 경로 확인
+sftp> pwd
+
+# 파일 및 폴더 목록 보기
+sftp> ls
+
+# SS1406 폴더로 이동
+sftp> cd SS1406
+
+# 파일 다운로드 (서버 -> 내 컴퓨터)
+sftp> get firmware_v1.0.bin
+
+# 파일 업로드 (내 컴퓨터 -> 서버) (관리자만)
+sftp> put local_firmware_v1.2.bin
+
+# 종료
+sftp> exit</code></pre>
+
+        <hr>
+
+        <h2>서버 접속 정보 요약</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>항목</th>
+                    <th>값</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>호스트</strong></td>
+                    <td><code>sftp.craneeyes.com</code> 또는 <code>54.180.29.96</code></td>
+                </tr>
+                <tr>
+                    <td><strong>포트</strong></td>
+                    <td><code>2222</code></td>
+                </tr>
+                <tr>
+                    <td><strong>프로토콜</strong></td>
+                    <td>SFTP (SSH File Transfer Protocol)</td>
+                </tr>
+                <tr>
+                    <td><strong>인증 방식</strong></td>
+                    <td>사용자명 + 비밀번호</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h2>지원 및 문의</h2>
+        <ul>
+            <li><strong>웹 관리자 페이지</strong>: <a href="https://firmware.craneeyes.com/admin/sftp-users" target="_blank">https://firmware.craneeyes.com/admin/sftp-users</a></li>
+            <li>문제가 지속되거나 추가 지원이 필요한 경우 시스템 관리자에게 문의하세요.</li>
+        </ul>
+
+        <div class="footer">
+            <p><strong>최종 업데이트</strong>: 2025-10-30</p>
+            <p><strong>버전</strong>: 1.0.0</p>
+            <p><strong>VIASOFT.AI</strong></p>
+        </div>
+    </div>
+</body>
+</html>
