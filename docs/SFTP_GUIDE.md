@@ -111,28 +111,6 @@ sftp -P 2222 crane_admin1@sftp.craneeyes.com
    - **비밀번호**: 해당 계정 비밀번호
 3. **빠른 연결** 또는 **사이트 관리자**에 저장
 
-### 3. WinSCP (Windows 전용)
-
-1. **WinSCP 다운로드**: https://winscp.net/
-2. **새 세션 설정**:
-   - **파일 프로토콜**: `SFTP`
-   - **호스트 이름**: `sftp.craneeyes.com`
-   - **포트 번호**: `2222`
-   - **사용자 이름**: `crane_admin1`
-   - **비밀번호**: 해당 계정 비밀번호
-3. **로그인** 클릭
-
-### 4. Cyberduck (macOS / Windows)
-
-1. **Cyberduck 다운로드**: https://cyberduck.io/
-2. **새 연결**:
-   - **프로토콜**: `SFTP (SSH File Transfer Protocol)`
-   - **서버**: `sftp.craneeyes.com`
-   - **포트**: `2222`
-   - **사용자명**: `crane_admin1`
-   - **비밀번호**: 해당 계정 비밀번호
-3. **연결** 클릭
-
 ---
 
 ## 📖 사용 예시
@@ -365,7 +343,6 @@ Could not resolve hostname sftp.craneeyes.com
    
 3. **GUI 클라이언트 사용**:
    - FileZilla: https://filezilla-project.org/
-   - WinSCP: https://winscp.net/
 
 ---
 
@@ -380,22 +357,6 @@ Could not resolve hostname sftp.craneeyes.com
   - 모델 접근 권한 설정
   - 계정 활성화/비활성화
 
-### 연락처
-
-문제가 지속되거나 추가 지원이 필요한 경우:
-- 시스템 관리자에게 문의
-- 웹 관리자 페이지에서 티켓 생성
-
----
-
-## 📚 참고 자료
-
-- [SFTP Wikipedia](https://en.wikipedia.org/wiki/SSH_File_Transfer_Protocol)
-- [FileZilla 사용 가이드](https://wiki.filezilla-project.org/Using)
-- [WinSCP 문서](https://winscp.net/eng/docs/start)
-- [OpenSSH SFTP Manual](https://man.openbsd.org/sftp)
-
----
 
 **최종 업데이트**: 2025-10-30
 **버전**: 1.0.0
